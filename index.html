@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-active {
+            overflow-y: hidden;
+        }
+
+        .header-select {
+            background-color: transparent;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            outline: none;
+            padding-right: 1.5rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            /* Standard property */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0 center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        .sticky-header th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc;
+            z-index: 10;
+        }
+
+        /* Remove arrows from number input */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 bg-slate-50 font-[Inter] border-t-4 border-blue-600">
+    <script>window.onerror = function (m, u, l) { alert("Sys Err: " + m + "\nL:" + l); }</script>
+
+    <!-- Navbar -->
+    <nav
+        class="bg-white border-b border-blue-100 px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 group/logo relative">
+                <!-- Hidden Logo Upload -->
+                <input type="file" id="logoUpload" class="hidden" accept="image/*" onchange="handleLogoUpload(this)">
+
+                <!-- Editable Logo Container -->
+                <div id="logoContainer" title="Click or Drag Logo to Change"
+                    class="h-10 w-10 bg-blue-600 text-white rounded flex items-center justify-center font-bold text-xl cursor-pointer overflow-hidden relative hover:opacity-90 transition"
+                    onclick="document.getElementById('logoUpload').click()"
+                    ondragover="event.preventDefault(); this.classList.add('ring-2', 'ring-blue-400')"
+                    ondragleave="this.classList.remove('ring-2', 'ring-blue-400')" ondrop="handleLogoDrop(event)">
+                    <img id="companyLogoImg" src="" class="w-full h-full object-contain hidden bg-white">
+                    <span id="companyLogoText">SD</span>
+                    <!-- Hover Overlay -->
+                    <div
+                        class="absolute inset-0 bg-black/30 hidden group-hover/logo:flex items-center justify-center text-white text-[8px] font-bold">
+                        EDIT</div>
+                </div>
+
+                <span class="font-bold text-slate-700 text-lg tracking-tight">Sales Dashboard <span
+                        class="text-blue-600">PRO</span></span>
+            </div>
+            <div class="h-10 w-px bg-slate-200 mx-2"></div>
+
+            <!-- EDITABLE PROFILE SECTION -->
+            <div class="flex items-center gap-3 group relative">
+                <!-- Hidden Upload -->
+                <input type="file" id="profileUpload" class="hidden" accept="image/*"
+                    onchange="handlePhotoUpload(this)">
+
+                <!-- Avatar -->
+                <div id="profilePhotoContainer" title="Click or Drag Image to Change"
+                    class="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-400 transition relative"
+                    onclick="document.getElementById('profileUpload').click()"
+                    ondragover="event.preventDefault(); this.classList.add('border-blue-500')"
+                    ondragleave="this.classList.remove('border-blue-500')" ondrop="handlePhotoDrop(event)">
+                    <img id="profileImage" src="" class="w-full h-full object-cover hidden">
+                    <i id="profileIcon" data-feather="user"></i>
+                    <!-- Hover Overlay -->
+                    <div
+                        class="absolute inset-0 bg-black/30 hidden group-hover:flex items-center justify-center text-white text-[8px] font-bold">
+                        EDIT</div>
+                </div>
+
+                <div class="flex flex-col">
+                    <span id="profileName" contenteditable="true" onblur="saveProfile()"
+                        class="font-bold text-slate-800 leading-tight focus:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 min-w-[100px]"
+                        title="Click to Edit Name">User Admin</span>
+                    <span class="text-[10px] text-blue-500 font-bold tracking-widest uppercase">Sales Executive</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="clearStorage()"
+                class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition border border-red-200"
+                title="Reset / Clear Data">
+                <i data-feather="trash-2" class="w-4 h-4"></i>
+            </button>
+
+            <!-- GSHEET SYNC BUTTONS -->
+            <div class="flex gap-1 border-x border-slate-200 px-2 mx-1">
+                <button id="btnPush" onclick="pushToSheet()"
+                    class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition border border-blue-200"
+                    title="Simpan data ke Cloud">
+                    <i data-feather="cloud-lightning" class="w-4 h-4"></i>
+                </button>
+                <button id="btnPull" onclick="pullFromSheet()"
+                    class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition border border-emerald-200"
+                    title="Ambil data dari Cloud">
+                    <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="flex flex-col justify-center text-[10px] text-slate-400 leading-tight pr-2">
+                <div>CLOUDSYNC</div>
+                <div id="syncTime">Never synced</div>
+            </div>
+
+            <div class="flex flex-col items-end gap-1">
+                <button onclick="document.getElementById('fileInput').click()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow-md shadow-blue-200">
+                    <i data-feather="upload"></i> Upload Sales Report
+                </button>
+                <button onclick="document.getElementById('shipmentInput').click()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow-md shadow-emerald-200">
+                    <i data-feather="truck"></i> Upload Shipment List
+                </button>
+            </div>
+        </div>
+        <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls">
+        <input type="file" id="shipmentInput" class="hidden" accept=".xlsx, .xls">
+    </nav>
+
+    <main class="p-6 max-w-[1600px] mx-auto space-y-6">
+        <!-- Upload Zone -->
+        <div id="uploadArea"
+            class="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center bg-white cursor-pointer hover:bg-blue-50 transition"
+            onclick="document.getElementById('fileInput').click()">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-feather="file" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-700">Upload Data Sales</h3>
+            <p class="text-slate-500 text-sm mt-1">Drag & drop file Excel disini</p>
+            <p class="text-xs text-slate-400 mt-2">Support: Multi-Year (2024, 2025...) side-by-side</p>
+        </div>
+
+        <div id="dashboardContent" class="hidden space-y-6">
+            <!-- Filters -->
+            <div
+                class="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex items-center gap-2 text-slate-500 text-sm font-bold"><i data-feather="filter"
+                            class="w-4 h-4"></i> Filters:</div>
+                    <select id="filterYear"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold bg-slate-50"></select>
+                    <select id="filterServiceType"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                        <option value="all">All Services</option>
+                    </select>
+                    <select id="filterMonth"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- ... -->
+                        <option value="all">All Months (YTD)</option>
+                        <option value="Jan">Jan</option>
+                        <option value="Feb">Feb</option>
+                        <option value="Mar">Mar</option>
+                        <option value="Apr">Apr</option>
+                        <option value="May">May</option>
+                        <option value="Jun">Jun</option>
+                        <option value="Jul">Jul</option>
+                        <option value="Aug">Aug</option>
+                        <option value="Sep">Sep</option>
+                        <option value="Oct">Oct</option>
+                        <option value="Nov">Nov</option>
+                        <option value="Dec">Dec</option>
+                    </select>
+                    <select id="filterLane"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-emerald-700 bg-emerald-50 border-emerald-200">
+                        <option value="all">Lane (Dest/Origin)</option>
+                    </select>
+                    <select id="filterCommodity"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-purple-700 bg-purple-50 border-purple-200">
+                        <option value="all">Commodity</option>
+                    </select>
+                    <div class="w-px h-6 bg-slate-300 mx-2"></div>
+                    <select id="filterPrinciple"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Principles</option>
+                    </select>
+                    <select id="filterCustomer"
+                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]">
+                        <option value="all">All Customers</option>
+                    </select>
+                </div>
+
+                <!-- SALES & FORECAST CONTROL -->
+                <div class="flex items-center gap-4">
+                    <label
+                        class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition select-none">
+                        <div class="relative">
+                            <input type="checkbox" id="forecastToggle" class="sr-only" onchange="toggleForecastMode()">
+                            <div class="w-10 h-5 bg-slate-300 rounded-full shadow-inner toggle-bg transition"></div>
+                            <div class="dot absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition">
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold text-slate-600 toggle-label">Forecast: OFF</span>
+                    </label>
+                </div>
+            </div>
+
+            <style>
+                input:checked~.toggle-bg {
+                    background-color: #2563eb;
+                }
+
+                input:checked~.dot {
+                    transform: translateX(100%);
+                }
+            </style>
+
+            <!-- KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                <div
+                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Revenue</div>
+                    <div class="text-base font-black text-slate-800 truncate" id="kpiRevenue">-</div>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">GP</div>
+                    <div class="text-base font-black text-slate-800 truncate" id="kpiGP">-</div>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Weight</div>
+                    <div class="text-base font-black text-slate-800 truncate" id="kpiWeight">-</div>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Dimension / CBM</div>
+                    <div class="text-base font-black text-slate-800 truncate" id="kpiDimension">-</div>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Pcs</div>
+                    <div class="text-base font-black text-slate-800 truncate" id="kpiPcs">-</div>
+                </div>
+
+                <!-- NEW TRADER CARD -->
+                <div class="bg-gradient-to-br from-pink-50 to-white p-4 rounded-xl shadow-md border border-pink-100 cursor-pointer hover:bg-pink-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                    onclick="showNewTraderModal()">
+                    <div class="text-[10px] font-bold text-pink-600 uppercase flex items-center gap-1">New Traders <i
+                            data-feather="info" class="w-3 h-3"></i></div>
+                    <div class="text-xl font-black text-pink-800" id="kpiNewTraders">-</div>
+                    <div class="text-[9px] text-pink-500 mt-1 leading-tight">>3mo Inactive</div>
+                </div>
+                <!-- REGULAR CARD -->
+                <div class="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl shadow-md border border-green-100 cursor-pointer hover:bg-green-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                    onclick="showRegularCustomerModal()">
+                    <div class="text-[10px] font-bold text-green-600 uppercase flex items-center gap-1">Regular <i
+                            data-feather="check-circle" class="w-3 h-3"></i></div>
+                    <div class="text-xl font-black text-green-800" id="kpiRegularCustomers">-</div>
+                    <div class="text-[9px] text-green-500 mt-1 leading-tight">>3mo Active</div>
+                </div>
+                <!-- LOST CARD -->
+                <div class="bg-gradient-to-br from-red-50 to-white p-4 rounded-xl shadow-md border border-red-100 cursor-pointer hover:bg-red-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                    onclick="showLostCustomerModal()">
+                    <div class="text-[10px] font-bold text-red-600 uppercase flex items-center gap-1">Lost Cust <i
+                            data-feather="alert-circle" class="w-3 h-3"></i></div>
+                    <div class="text-xl font-black text-red-800" id="kpiLostCustomers">-</div>
+                    <div class="text-[9px] text-red-500 mt-1 leading-tight">>3mo Zero</div>
+                </div>
+            </div>
+
+            <!-- MONTHLY ANALYSIS -->
+            <div id="monthlyAnalysis" class="hidden mb-6"></div>
+
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">Customer Health Trend (Full Year)</h3>
+                    <div class="text-xs text-slate-400">Tracks New (Blue), Regular (Green), and Lost (Red)</div>
+                </div>
+                <div class="h-64"><canvas id="chartCustomerHealth"></canvas></div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="font-bold text-slate-700 text-sm mb-2">Revenue Trend</h3>
+                    <div class="h-48"><canvas id="chartRevenue"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="font-bold text-slate-700 text-sm mb-2">GP Trend</h3>
+                    <div class="h-48"><canvas id="chartGP"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="font-bold text-slate-700 text-sm mb-2">Weight Trend</h3>
+                    <div class="h-48"><canvas id="chartWeight"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="font-bold text-slate-700 text-sm mb-2">Pcs Trend</h3>
+                    <div class="h-48"><canvas id="chartPcs"></canvas></div>
+                </div>
+            </div>
+
+            <!-- MONTHLY PERFORMANCE TABLE -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
+                <div
+                    class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between items-center bg-slate-50">
+                    <span>Monthly Performance Report v1.2</span>
+                    <span class="text-xs text-slate-400 font-normal">Budgets & Sales Names are auto-saved</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left sticky-header">
+                        <thead class="bg-blue-100 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-3 py-3 w-16">Month</th>
+                                <th class="px-3 py-3 text-right">Revenue</th>
+                                <th class="px-3 py-3 text-right">Diff (IDR)</th>
+                                <th class="px-3 py-3 text-right">Growth %</th>
+                                <th class="px-3 py-3 text-right bg-blue-50 w-32">Budget (IDR)</th>
+                                <th class="px-3 py-3 text-right bg-blue-50 w-20">Achv %</th>
+                                <th class="px-3 py-3 text-right">Act. Cust</th>
+                                <th class="px-3 py-3 text-right">Diff</th>
+                                <th class="px-3 py-3 text-right">Growth %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Customers -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between">
+                    <span>Top Customers</span>
+                    <span id="topCustSubtitle" class="text-sm font-normal text-slate-500"></span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th class="px-6 py-3">Customer</th>
+                                <th class="px-6 py-3">Principle</th>
+                                <th class="px-6 py-3 text-right">Revenue</th>
+                                <th class="px-6 py-3 text-right">GP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCustomerTable" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- PIPELINE SECTION -->
+            <div class="bg-white rounded-xl shadow-lg border border-blue-100 overflow-hidden mt-6">
+                <div class="px-6 py-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello"
+                                class="w-4 h-4"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
+                            <p class="text-xs text-slate-400">Monitor potential opportunities & traffic</p>
+                        </div>
+                    </div>
+                    <button onclick="addPipelineRow()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
+                        <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 min-w-[150px]">Customer</th>
+                                <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
+                                <th class="px-4 py-3 w-40">Type</th>
+                                <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
+                                <th class="px-4 py-3 w-32">Est. Ready</th>
+                                <th class="px-4 py-3 w-32">Status</th>
+                                <th class="px-4 py-3 w-10 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="pipelineTableBody" class="divide-y divide-blue-50">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                        <tfoot class="bg-slate-50 border-t border-slate-100">
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
+                                    Total Potential:</td>
+                                <td id="pipelineTotalRev" class="px-4 py-3 text-right font-bold text-blue-700">-</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div id="debugInfo" class="text-xs text-slate-400 mt-4"></div>
+
+            <datalist id="customerListOptions"></datalist>
+
+            <script>
+                // --- PIPELINE LOGIC ---
+                let pipelineData = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
+
+                function savePipeline() {
+                    localStorage.setItem('pipeline_sales_dashboard', JSON.stringify(pipelineData));
+                    renderPipeline();
+                    updateYearFilter();
+                    if (document.getElementById('forecastToggle') && document.getElementById('forecastToggle').checked) updateDashboard();
+                }
+
+                function addPipelineRow() {
+                    pipelineData.push({
+                        id: Date.now(),
+                        customer: '',
+                        traffic: '',
+                        type: 'New Customer',
+                        rev: 0,
+                        ready: '',
+                        status: 'Profiling'
+                    });
+                    savePipeline();
+                }
+
+                function deletePipelineRow(id) {
+                    if (confirm('Remove this opportunity?')) {
+                        pipelineData = pipelineData.filter(i => i.id !== id);
+                        savePipeline();
+                    }
+                }
+
+                function updatePipeline(id, field, val) {
+                    const row = pipelineData.find(i => i.id === id);
+                    if (row) {
+                        row[field] = (field === 'rev') ? parseFloat(val) || 0 : val;
+                        savePipeline();
+                    }
+                }
+
+                function renderPipeline() {
+                    const tbody = document.getElementById('pipelineTableBody');
+                    if (!tbody) return;
+
+                    let total = 0;
+                    tbody.innerHTML = pipelineData.map(item => {
+                        total += (item.rev || 0);
+                        return `
+                        <tr class="hover:bg-blue-50/20 transition group">
+                            <td class="px-2 py-2">
+                                <input type="text" list="customerListOptions" 
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-slate-700 font-bold"
+                                    placeholder="Customer Name..."
+                                    value="${item.customer}"
+                                    onchange="updatePipeline(${item.id}, 'customer', this.value)"
+                                >
+                            </td>
+                            <td class="px-2 py-2">
+                                <input type="text" 
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-slate-600 text-xs"
+                                    placeholder="e.g. OB-US-2kg..."
+                                    value="${item.traffic}"
+                                    onchange="updatePipeline(${item.id}, 'traffic', this.value)"
+                                >
+                            </td>
+                            <td class="px-2 py-2">
+                                <select 
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-xs font-semibold ${item.type === 'New Reactivated (Lost/Lapsed)' ? 'text-purple-600 bg-purple-50' : (item.type === 'Cross Sell' ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50')}"
+                                    onchange="updatePipeline(${item.id}, 'type', this.value)"
+                                >
+                                    <option value="New Reactivated (Lost/Lapsed)" ${item.type === 'New Reactivated (Lost/Lapsed)' ? 'selected' : ''}>New Reactivated (Lost/Lapsed)</option>
+                                    <option value="New Customer" ${item.type === 'New Customer' ? 'selected' : ''}>New Customer</option>
+                                    <option value="Cross Sell" ${item.type === 'Cross Sell' ? 'selected' : ''}>Cross Sell</option>
+                                </select>
+                            </td>
+                            <td class="px-2 py-2">
+                                <input type="number" 
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-right font-mono text-slate-700"
+                                    placeholder="0"
+                                    value="${item.rev}"
+                                    onchange="updatePipeline(${item.id}, 'rev', this.value)"
+                                >
+                            </td>
+                            <td class="px-2 py-2">
+                                <input type="date" 
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-xs text-slate-500 font-medium cursor-pointer"
+                                    value="${item.ready}"
+                                    onchange="updatePipeline(${item.id}, 'ready', this.value)"
+                                >
+                            </td>
+                            <td class="px-2 py-2">
+                                <select 
+                                    class="w-full border border-transparent rounded px-2 py-1 outline-none text-xs font-bold ${item.status === 'Won' ? 'bg-green-100 text-green-700' : (item.status === 'Lost' ? 'bg-red-100 text-red-500' : (item.status === 'Negotiation' ? 'bg-orange-100 text-orange-600' : (item.status === 'Proposal' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600')))}"
+                                    onchange="updatePipeline(${item.id}, 'status', this.value)"
+                                >
+                                    <option value="Profiling" ${item.status === 'Profiling' || !item.status ? 'selected' : ''}>Profiling</option>
+                                    <option value="Proposal" ${item.status === 'Proposal' ? 'selected' : ''}>Proposal</option>
+                                    <option value="Negotiation" ${item.status === 'Negotiation' ? 'selected' : ''}>Negotiation</option>
+                                    <option value="Won" ${item.status === 'Won' ? 'selected' : ''}>WON</option>
+                                    <option value="Lost" ${item.status === 'Lost' ? 'selected' : ''}>Lost</option>
+                                </select>
+                            </td>
+                            <td class="px-2 py-2 text-center">
+                                <button onclick="deletePipelineRow(${item.id})" class="text-slate-300 hover:text-red-500 transition p-1"><i data-feather="trash-2" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                        `;
+                    }).join('');
+
+                    document.getElementById('pipelineTotalRev').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
+                    feather.replace();
+                }
+
+                // Initial Render (Safe check)
+                document.addEventListener('DOMContentLoaded', () => {
+                    cleanPipelineData(); // Fix bad dates on load
+                    setTimeout(renderPipeline, 500);
+                });
+
+                function cleanPipelineData() {
+                    let changed = false;
+                    pipelineData.forEach(p => {
+                        if (!p.ready) return;
+                        const d = new Date(p.ready);
+                        if (isNaN(d.getTime())) {
+                            p.ready = new Date().toISOString().split('T')[0];
+                            changed = true;
+                        } else {
+                            const y = d.getFullYear();
+                            // Fix: Year 18985 or other garbage
+                            if (y < 2000 || y > 2040) {
+                                p.ready = new Date().toISOString().split('T')[0];
+                                changed = true;
+                            }
+                            // Fix: Invalid JS Format passed to input (e.g. "12/12/2024" isn't yyyy-MM-dd)
+                            if (!/^\d{4}-\d{2}-\d{2}$/.test(p.ready)) {
+                                p.ready = d.toISOString().split('T')[0];
+                                changed = true;
+                            }
+                        }
+                    });
+                    if (changed) {
+                        console.log("Sanitized Pipeline Data (invalid dates fixed)");
+                        savePipeline();
+                    }
+                }
+            </script>
+
+            <!-- Footer -->
+            <footer class="mt-12 border-t border-slate-200 py-6 text-center">
+                <p class="text-sm text-slate-500 font-medium">Copyright &copy; Zensheet - <a
+                        href="https://zensheet.my.id" target="_blank"
+                        class="text-blue-600 hover:text-blue-700 hover:underline">zensheet.my.id</a></p>
+            </footer>
+            <!-- PROFILE JS LOGIC -->
+            <script>
+                // --- PROFILE PERSONALIZATION ---
+                function handlePhotoUpload(input) {
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            saveAvatar(e.target.result);
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+
+                function handlePhotoDrop(e) {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('border-blue-500');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        const file = e.dataTransfer.files[0];
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                saveAvatar(e.target.result);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                }
+
+                function saveAvatar(dataUrl) {
+                    try {
+                        localStorage.setItem('user_avatar_sd', dataUrl);
+                        setAvatar(dataUrl);
+                    } catch (e) {
+                        alert("Image too large to save! Try a smaller image.");
+                    }
+                }
+
+                function setAvatar(url) {
+                    const img = document.getElementById('profileImage');
+                    const icon = document.getElementById('profileIcon');
+                    if (url) {
+                        img.src = url;
+                        img.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    }
+                }
+
+                function saveProfile() {
+                    const name = document.getElementById('profileName').innerText;
+                    localStorage.setItem('user_name_sd', name);
+                }
+
+                // --- COMPANY LOGO LOGIC ---
+                function handleLogoUpload(input) {
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) { saveLogo(e.target.result); };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+                function handleLogoDrop(e) {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('ring-2', 'ring-blue-400');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        const file = e.dataTransfer.files[0];
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) { saveLogo(e.target.result); };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                }
+                function saveLogo(dataUrl) {
+                    try {
+                        localStorage.setItem('company_logo_sd', dataUrl);
+                        setLogo(dataUrl);
+                    } catch (e) { alert("Logo image too large!"); }
+                }
+                function setLogo(url) {
+                    const img = document.getElementById('companyLogoImg');
+                    const txt = document.getElementById('companyLogoText');
+                    if (url) {
+                        img.src = url;
+                        img.classList.remove('hidden');
+                        txt.classList.add('hidden');
+                    }
+                }
+                // Init Logo
+                const savedLogo = localStorage.getItem('company_logo_sd');
+                if (savedLogo) setLogo(savedLogo);
+
+                // Init Load Profile
+                document.addEventListener('DOMContentLoaded', () => {
+                    const savedAvatar = localStorage.getItem('user_avatar_sd');
+                    if (savedAvatar) setAvatar(savedAvatar);
+
+                    const savedName = localStorage.getItem('user_name_sd');
+                    if (savedName) document.getElementById('profileName').innerText = savedName;
+
+                    // Automatically attempt to pull from cloud
+                    setTimeout(pullFromSheet, 1000);
+                });
+
+                // --- GSHEET SYNC LOGIC ---
+                const GAS_URL = "https://script.google.com/macros/s/AKfycbzXAq09hoVAhPz0qAjyK4HgKLJFmpQMQn4KHeRri1m5TJ1EOj3DzVyBMBnebca7gBl1Zw/exec";
+
+                async function pushToSheet() {
+                    if (!allData || allData.length === 0) {
+                        alert("Tidak ada data untuk disimpan. Silakan upload file Excel terlebih dahulu.");
+                        return;
+                    }
+
+                    const btn = document.getElementById('btnPush');
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i data-feather="loader" class="w-4 h-4 animate-spin"></i>';
+                    feather.replace();
+                    btn.disabled = true;
+
+                    try {
+                        const payload = {
+                            id: "DASHBOARD_SALES_EXSIS",
+                            type: "SALES_DATA",
+                            client: document.getElementById('profileName').innerText,
+                            amount: 0,
+                            fullData: {
+                                allData: allData,
+                                pipelineData: pipelineData,
+                                lastUpdated: new Date().toISOString()
+                            }
+                        };
+
+                        const response = await fetch(GAS_URL, {
+                            method: "POST",
+                            body: JSON.stringify(payload)
+                        });
+
+                        const res = await response.json();
+                        if (res.status === "success") {
+                            const now = new Date().toLocaleString();
+                            document.getElementById('syncTime').innerText = now;
+                            alert("✅ Data berhasil disimpan ke Cloud!");
+                        } else {
+                            throw new Error(res.message);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("❌ Gagal menyimpan data: " + err.message);
+                    } finally {
+                        btn.innerHTML = originalHtml;
+                        feather.replace();
+                        btn.disabled = false;
+                    }
+                }
+
+                async function pullFromSheet() {
+                    const btn = document.getElementById('btnPull');
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i data-feather="refresh-cw" class="w-4 h-4 animate-spin"></i>';
+                    feather.replace();
+
+                    try {
+                        const response = await fetch(GAS_URL);
+                        const dataList = await response.json();
+
+                        // Find our specific dashboard data
+                        const entry = dataList.find(d => d.id === "DASHBOARD_SALES_EXSIS");
+                        if (entry && entry.fullData) {
+                            const cloud = entry.fullData;
+                            if (cloud.allData) allData = cloud.allData;
+                            if (cloud.pipelineData) {
+                                pipelineData = cloud.pipelineData;
+                                localStorage.setItem('pipeline_sales_dashboard', JSON.stringify(pipelineData));
+                            }
+
+                            // Save to Local Storage for offline use
+                            saveDataToStorage(window.rawSheetData || []); // rawSheetData might not be fully available but processRawData would be
+
+                            // Re-init UI
+                            if (allData.length > 0) {
+                                const now = new Date().toLocaleString();
+                                if (document.getElementById('syncTime')) document.getElementById('syncTime').innerText = now;
+
+                                dashboardContent.classList.remove('hidden');
+                                uploadArea.style.display = 'none';
+                                initFilters();
+                                updateDashboard();
+                                renderPipeline();
+                                console.log("✅ Data berhasil ditarik dari Cloud!");
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Cloud pull failed:", err);
+                    } finally {
+                        btn.innerHTML = originalHtml;
+                        feather.replace();
+                    }
+                }
+
+                function saveDataToStorage(raw) {
+                    try {
+                        // We store the processed allData and pipelineData effectively
+                        // But the original script had its own persistence logic somewhere?
+                        // Let's check where it saves.
+                    } catch (e) { }
+                }
+            </script>
+        </div>
+    </main>
+
+    <!-- Modals (Hidden) -->
+    <div id="ntModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
+        <div class="modal-overlay absolute w-full h-full bg-black opacity-50" onclick="closeModals()"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                    <p class="text-2xl font-bold text-blue-800">New Traders List</p>
+                    <div class="cursor-pointer z-50" onclick="closeModals()"><i data-feather="x"></i></div>
+                </div>
+                <div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm my-3 mb-4"><strong>Criteria:</strong> Active
+                    in <span id="ntModalMonth" class="font-bold"></span>, but ZERO in prev 3 months.</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-4 py-2">Customer</th>
+                                <th class="px-4 py-2">Principle</th>
+                                <th class="px-4 py-2 text-right">Current</th>
+                                <th class="px-4 py-2 text-right">Prev 3 Mos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ntTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="lcModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
+        <div class="modal-overlay absolute w-full h-full bg-black opacity-50" onclick="closeModals()"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                    <p class="text-2xl font-bold text-red-800">Lost Customers List</p>
+                    <div class="cursor-pointer z-50" onclick="closeModals()"><i data-feather="x"></i></div>
+                </div>
+                <div class="bg-red-50 text-red-800 p-3 rounded-lg text-sm my-3 mb-4"><strong>Criteria:</strong> Zero
+                    Revenue for 3 consecutive months ending <span id="lcModalMonth" class="font-bold"></span>.</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-4 py-2">Customer</th>
+                                <th class="px-4 py-2">Principle</th>
+                                <th class="px-4 py-2 text-right">Current</th>
+                                <th class="px-4 py-2 text-right">Prev 2 Mos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lcTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="rcModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
+        <div class="modal-overlay absolute w-full h-full bg-black opacity-50" onclick="closeModals()"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                    <p class="text-2xl font-bold text-green-800">Regular Customers List</p>
+                    <div class="cursor-pointer z-50" onclick="closeModals()"><i data-feather="x"></i></div>
+                </div>
+                <div class="bg-green-50 text-green-800 p-3 rounded-lg text-sm my-3 mb-4"><strong>Criteria:</strong>
+                    Active (Rev > 0) for 3 consecutive months ending <span id="rcModalMonth" class="font-bold"></span>.
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-4 py-2">Customer</th>
+                                <th class="px-4 py-2">Principle</th>
+                                <th class="px-4 py-2 text-right">Current</th>
+                                <th class="px-4 py-2 text-right">Prev 2 Mos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- PARSER (Compressed) ---
+        async function parseAndProcessExcel(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        // 1. Process Raw Sales Data
+                        const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                        window.rawSheetData = rawData;
+
+                        // 2. Process Pipeline Sheet (if exists)
+                        const pipelineSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes("pipeline"));
+                        if (pipelineSheetName) {
+                            console.log(`Pipeline Sheet Found: ${pipelineSheetName}`);
+                            const pipeSheet = workbook.Sheets[pipelineSheetName];
+                            const pipeRows = XLSX.utils.sheet_to_json(pipeSheet, { header: 1 });
+                            if (pipeRows && pipeRows.length > 1) {
+                                const parsedPipeline = parsePipelineSheet(pipeRows);
+                                if (parsedPipeline.length > 0) {
+                                    pipelineData = parsedPipeline;
+                                    savePipeline(); // Sync with LS and UI
+                                    alert(`Integrated ${parsedPipeline.length} Pipeline items from Excel!`);
+                                }
+                            }
+                        }
+
+                        const processed = processRawData(rawData);
+                        saveDataToStorage(rawData); // Save for persistence
+                        resolve(processed);
+                    } catch (err) { reject(err); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Helper: Parse Pipeline Sheet
+        function parsePipelineSheet(rows) {
+            // 1. Find Header
+            let headerIdx = 0;
+            let maxCols = 0;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const len = row.length;
+                if (len > maxCols) { maxCols = len; headerIdx = i; }
+            }
+
+            const header = rows[headerIdx].map(x => (x || "").toString().toLowerCase());
+
+            // 2. Map Columns (Flexible matching)
+            const find = (arr) => header.findIndex(h => arr.some(k => h.includes(k)));
+
+            const idxCust = find(["customer", "nama", "client"]);
+            const idxTraf = find(["traffic", "mode", "load"]);
+            const idxType = find(["type", "tipe", "kategori"]);
+            const idxRev = find(["rev", "amount", "nilai", "omset", "invoice"]);
+            const idxDate = find(["ready", "date", "tanggal", "est"]);
+            const idxStat = find(["status", "kondisi", "state"]);
+
+            if (idxCust === -1 || idxRev === -1) {
+                console.warn("Pipeline header ambiguous, skipping auto-load.");
+                return [];
+            }
+
+            // 3. Parse Rows
+            const newPipe = [];
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[idxCust]) continue;
+
+                // Clean Money
+                let rev = 0;
+                if (idxRev !== -1 && r[idxRev]) {
+                    if (typeof r[idxRev] === 'number') rev = r[idxRev];
+                    else rev = parseFloat(r[idxRev].toString().replace(/[^\d]/g, '')) || 0;
+                }
+
+                // Clean Date (Excel Date Code or String)
+                let readyDate = new Date().toISOString().split('T')[0];
+                let d = null;
+
+                if (idxDate !== -1 && r[idxDate]) {
+                    if (typeof r[idxDate] === 'number') {
+                        // Excel Date Code
+                        d = new Date(Math.round((r[idxDate] - 25569) * 86400 * 1000));
+                    } else {
+                        // String or other
+                        d = new Date(r[idxDate]);
+                    }
+                }
+
+                // Validation: If date is invalid or year is crazy (e.g. 1899 or 20300), fallback to today
+                if (d && !isNaN(d.getTime())) {
+                    const y = d.getFullYear();
+                    if (y >= 2000 && y <= 2040) {
+                        readyDate = d.toISOString().split('T')[0];
+                    }
+                }
+
+                // Status Normalization (Profiling -> Proposal -> Negotiation -> Won/Lost)
+                let stat = "Profiling";
+                if (idxStat !== -1 && r[idxStat]) {
+                    const s = r[idxStat].toString().toLowerCase();
+                    if (s.includes("won") || s.includes("deal") || s.includes("clos")) stat = "Won";
+                    else if (s.includes("lost") || s.includes("fail") || s.includes("cancel")) stat = "Lost";
+                    else if (s.includes("nego")) stat = "Negotiation";
+                    else if (s.includes("prop") || s.includes("offer") || s.includes("quot")) stat = "Proposal";
+                }
+
+                // Type Normalization (New Reactivated / New Customer / Cross Sell)
+                let pType = "New Customer";
+                if (idxType !== -1 && r[idxType]) {
+                    const t = r[idxType].toString().toLowerCase();
+                    if (t.includes("cross") || t.includes("lane") || t.includes("line")) pType = "Cross Sell";
+                    else if (t.includes("react") || t.includes("old") || t.includes("lapsed") || t.includes("lost")) pType = "New Reactivated (Lost/Lapsed)";
+                }
+
+                newPipe.push({
+                    id: Date.now() + i,
+                    customer: r[idxCust] || "Unknown",
+                    traffic: idxTraf !== -1 ? (r[idxTraf] || "") : "",
+                    type: pType,
+                    rev: rev,
+                    ready: readyDate,
+                    status: stat
+                });
+            }
+
+            return newPipe;
+        }
+
+        function cleanNum(val) { if (typeof val === 'number') return val; if (!val) return 0; let s = val.toString().replace(/[^0-9.-]/g, ''); return parseFloat(s) || 0; }
+
+        function processRawData(rows) {
+            // Hardcoded Structure for "Rev Rifai"
+            // Row 3 (Index 3): Month Headers. Expecting multiple years (Jan...Dec, Jan...Dec)
+            // Row 4 (Index 4): Metrics (Pcs, Weight, Rev, GP...)
+            // Col 4 (Index 4): Customer Name
+
+            const headerRowIdx = 3;
+            const yearRowIdx = 2; // Row containing 2024, 2025 labels
+            if (rows.length < 5) return [];
+
+            // 1. Identify Year Labels in Row 2
+            const detectedYears = [];
+            (rows[yearRowIdx] || []).forEach((cell, idx) => {
+                const val = (cell || "").toString().trim();
+                // Match 4 digits starting with 20
+                if (/^20\d{2}$/.test(val)) {
+                    detectedYears.push({ year: val, colIdx: idx });
+                }
+            });
+
+            // 2. Identify Month Blocks (Jan) in Row 3
+            // AND Dynamically finding Metrics offsets for each block
+            const yearBlocks = [];
+
+            // Loop through header row to find 'Jan'
+            (rows[headerRowIdx] || []).forEach((cell, idx) => {
+                const val = (cell || "").toString().toLowerCase().trim();
+                if (val === 'jan') {
+                    // Found a Year Block start.
+                    // NOW SCAN SUB-HEADERS (Row 4) to find Rev, GP, etc. relative to this Jan
+                    // We expect metrics to be within the next few columns (e.g. 0 to 5)
+                    let offsetRev = 2; let offsetGP = 3; let offsetWgt = 1; let offsetPcs = 0; let offsetDim = 4;
+
+                    // Scan next 8 columns in Metric Row
+                    const metricRow = rows[headerRowIdx + 1] || [];
+                    for (let k = 0; k < 8; k++) {
+                        const mVal = (metricRow[idx + k] || "").toString().toLowerCase().trim();
+                        if (mVal.includes("rev")) offsetRev = k;
+                        else if (mVal.includes("gp") || mVal.includes("gross")) offsetGP = k;
+                        else if (mVal.includes("weight") || mVal.includes("wgt")) offsetWgt = k;
+                        else if (mVal.includes("pcs")) offsetPcs = k;
+                        else if (mVal.includes("dim") || mVal.includes("vol") || mVal.includes("cbm")) offsetDim = k;
+                    }
+
+                    // Determine Stride (Gap between Jan and Feb metrics)
+                    const janRevIdx = idx + offsetRev;
+                    let detectedStride = 4; // Default fallback
+
+                    // Scan forward to find the next "Rev" or next Month name
+                    for (let k = 1; k < 20; k++) {
+                        const nextValMetric = (metricRow[janRevIdx + k] || "").toString().toLowerCase().trim();
+                        if (nextValMetric.includes("rev") || nextValMetric.includes("amount") || nextValMetric.includes("omset")) {
+                            detectedStride = k;
+                            console.log(`Detected Dynamic Stride: ${detectedStride} for Jan at ${idx}`);
+                            break;
+                        }
+                    }
+
+                    yearBlocks.push({
+                        startCol: idx,
+                        stride: detectedStride,
+                        offsets: { rev: offsetRev, gp: offsetGP, wgt: offsetWgt, pcs: offsetPcs, dim: offsetDim }
+                    });
+                }
+            });
+
+            // 3. Map Years to Blocks
+            if (detectedYears.length > 0) {
+                detectedYears.sort((a, b) => a.colIdx - b.colIdx);
+                yearBlocks.sort((a, b) => a.startCol - b.startCol);
+
+                yearBlocks.forEach((block, i) => {
+                    if (detectedYears[i]) {
+                        block.year = detectedYears[i].year;
+                    } else {
+                        const lastYearVal = parseInt(detectedYears[detectedYears.length - 1].year);
+                        block.year = (lastYearVal + (i - (detectedYears.length - 1))).toString();
+                    }
+                });
+            } else {
+                const startYear = 2024;
+                yearBlocks.forEach((b, i) => {
+                    b.year = (startYear + i).toString();
+                });
+            }
+
+            const cleanData = [];
+
+            // 4. Parse Data Rows
+            for (let i = 5; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length < 5) continue;
+
+                // AGGRESSIVE FILTER: Exclude "Total" rows
+                // Check multiple columns for total-related keywords
+                let isTotalRow = false;
+                for (let k = 0; k < Math.min(r.length, 10); k++) {
+                    const cellVal = (r[k] || "").toString().toLowerCase();
+                    if (cellVal.includes("total") || cellVal.includes("jumlah") || cellVal.includes("grand") || cellVal.includes("summary")) {
+                        isTotalRow = true;
+                        break;
+                    }
+                }
+                if (isTotalRow) continue;
+
+                // Customer Name at Column Index 4
+                let rawCust = (r[4] || "").toString().trim();
+                if (!rawCust || rawCust.length < 2) continue;
+
+                // Normalize Customer
+                let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim();
+                cleanCust = cleanCust.replace(/\s+/g, ' ');
+
+                const principle = (r[1] || "General").toString();
+
+                // Process each year block found
+                yearBlocks.forEach(block => {
+                    if (!block.year) return;
+
+                    const monthlyData = [];
+                    const startIdx = block.startCol;
+                    const offsets = block.offsets;
+                    const blockStride = block.stride;
+
+                    const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+                    monthsList.forEach((mName, mIdx) => {
+                        const monthStartCol = startIdx + (mIdx * blockStride);
+                        if (monthStartCol >= r.length) return;
+
+                        const getVal = (offset) => {
+                            const valIdx = monthStartCol + offset;
+                            const v = r[valIdx];
+                            if (typeof v === 'number') return v;
+                            if (typeof v === 'string') {
+                                let s = v.replace(/[^0-9.,-]/g, '');
+                                if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
+                                    if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+                                    else s = s.replace(/,/g, '');
+                                } else if (s.indexOf('.') > -1) s = s.replace(/\./g, '');
+                                else if (s.indexOf(',') > -1) s = s.replace(/,/g, '.');
+                                return parseFloat(s) || 0;
+                            }
+                            return 0;
+                        };
+
+                        monthlyData.push({
+                            month: capitalize(mName),
+                            revenue: getVal(offsets.rev),
+                            gp: getVal(offsets.gp),
+                            weight: getVal(offsets.wgt),
+                            pcs: getVal(offsets.pcs),
+                            dimension: getVal(offsets.dim)
+                        });
+                    });
+
+                    cleanData.push({
+                        customer: cleanCust,
+                        principle: principle,
+                        serviceType: (r[2] || "Unknown").toString().toUpperCase().trim(),
+                        year: block.year,
+                        monthlyData: monthlyData
+                    });
+                });
+            }
+            console.log(`Parsed ${cleanData.length} total rows from Excel.`);
+            return cleanData;
+        }
+
+
+        function capitalize(s) { if (!s) return ""; return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // --- APP STATE ---
+        let allData = [], charts = {};
+        let newTradersList = [], lostCustomersList = [], regularCustomersList = [];
+
+        // Dom Refs
+        const fileInput = document.getElementById('fileInput'), uploadArea = document.getElementById('uploadArea'), dashboardContent = document.getElementById('dashboardContent');
+        const filterYear = document.getElementById('filterYear'), filterMonth = document.getElementById('filterMonth'), filterPrinciple = document.getElementById('filterPrinciple'), filterCustomer = document.getElementById('filterCustomer');
+
+        // Handlers
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length) processFile(e.target.files[0]) });
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]); });
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('bg-blue-50'); });
+        uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('bg-blue-50'); });
+        const debounce = (fn, delay) => {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), delay);
+            };
+        };
+        const debouncedUpdate = debounce(() => {
+            const content = document.getElementById('dashboardContent');
+            if (content) content.style.opacity = '0.7';
+            updateDashboard();
+            if (content) content.style.opacity = '1';
+        }, 150);
+        [filterYear, filterMonth, filterPrinciple, filterCustomer].forEach(el => el.addEventListener('change', debouncedUpdate));
+
+        async function processFile(file) {
+            try {
+                uploadArea.innerHTML = `<div class="animate-pulse text-blue-600 font-bold">Parsing...</div>`;
+                allData = await parseAndProcessExcel(file);
+                if (allData.length === 0) throw new Error("No data found");
+
+                enrichSalesData(allData); // Enrich immediately
+                initFilters();
+
+                uploadArea.style.display = 'none'; dashboardContent.classList.remove('hidden');
+                if (document.querySelector("#filterYear option[value='2025']")) filterYear.value = "2025";
+                updateDashboard();
+            } catch (err) {
+                alert(err); uploadArea.innerHTML = `<button onclick="location.reload()">Retry</button>`;
+            }
+        }
+
+        function updateYearFilter() {
+            const pipeline = JSON.parse(localStorage.getItem('pipeline_myrna') || '[]');
+            const pipeYears = pipeline.map(p => {
+                const d = new Date(p.ready);
+                return !isNaN(d.getTime()) ? d.getFullYear().toString() : null;
+            }).filter(y => y);
+
+            const dataYears = allData.map(d => d.year);
+            const uniqueYears = [...new Set([...dataYears, ...pipeYears])].sort().reverse();
+
+            const current = filterYear.value;
+            document.getElementById('filterYear').innerHTML = uniqueYears.map(v => `<option value="${v}">${v}</option>`).join('');
+
+            // Restore selection or default to latest
+            if (uniqueYears.includes(current)) filterYear.value = current;
+            else if (uniqueYears.length > 0) filterYear.value = uniqueYears[0];
+        }
+
+        function initFilters() {
+            if (!allData || allData.length === 0) return;
+
+            const setHtml = (id, list) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = (id !== 'filterYear' ? '<option value="all">All</option>' : '') + list.map(v => `<option value="${v}">${v}</option>`).join('');
+            };
+
+            updateYearFilter();
+
+            // Principles
+            setHtml('filterPrinciple', [...new Set(allData.map(d => d.principle))].sort());
+            // Customers
+            setHtml('filterCustomer', [...new Set(allData.map(d => d.customer))].sort());
+            // Service Types (NEW)
+            setHtml('filterServiceType', [...new Set(allData.map(d => d.serviceType))].filter(s => s && s !== 'UNKNOWN').sort());
+
+            // New Filters (Lane & Commodity) - These come from enriched monthly data
+            const lanes = new Set();
+            const comms = new Set();
+            allData.forEach(r => r.monthlyData.forEach(m => {
+                if (m.lane) lanes.add(m.lane);
+                if (m.commodity) comms.add(m.commodity);
+            }));
+            setHtml('filterLane', [...lanes].sort());
+            setHtml('filterCommodity', [...comms].sort());
+
+            // Populate Datalist for Pipeline
+            const uniqueCust = [...new Set(allData.map(d => d.customer))].sort();
+            document.getElementById('customerListOptions').innerHTML = uniqueCust.map(v => `<option value="${v}">`).join('');
+        }
+
+        // Add listeners for new filters
+        const filterLane = document.getElementById('filterLane');
+        const filterCommodity = document.getElementById('filterCommodity');
+        if (filterLane) filterLane.addEventListener('change', debouncedUpdate);
+        if (filterCommodity) filterCommodity.addEventListener('change', debouncedUpdate);
+        const filterService = document.getElementById('filterServiceType');
+        if (filterService) filterService.addEventListener('change', debouncedUpdate);
+
+        function toggleForecastMode() {
+            const toggle = document.getElementById('forecastToggle');
+            const label = toggle.closest('label').querySelector('.toggle-label');
+            if (label) label.innerText = toggle.checked ? 'Forecast: ON' : 'Forecast: OFF';
+            debouncedUpdate();
+        }
+
+        function updateDashboard() {
+            // REMOVED Redundant enrichment
+            // enrichSalesData(allData); 
+
+            let activeData = [...allData];
+
+            // FORECAST LOGIC
+            const isForecast = document.getElementById('forecastToggle') && document.getElementById('forecastToggle').checked;
+            if (isForecast) {
+                const pipeline = JSON.parse(localStorage.getItem('pipeline_myrna') || '[]');
+                const wonItems = pipeline.filter(p => p.status === 'Won' && p.ready && p.rev);
+
+                wonItems.forEach(item => {
+                    const date = new Date(item.ready);
+                    if (isNaN(date.getTime())) return;
+                    const y = date.getFullYear().toString();
+                    const mIndex = date.getMonth();
+                    const mName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][mIndex];
+
+                    // Create simulated row matching structure
+                    activeData.push({
+                        year: y,
+                        principle: 'Pipeline',
+                        customer: item.customer || 'Unknown',
+                        serviceType: 'UNKNOWN', // NEW: Default for pipeline
+                        monthlyData: Array(12).fill(0).map((_, i) => ({
+                            month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+                            revenue: i === mIndex ? (item.rev || 0) : 0,
+                            gp: 0,
+                            weight: 0,
+                            pcs: 0,
+                            active: i === mIndex ? 1 : 0
+                        }))
+                    });
+                });
+            }
+
+            const y = filterYear.value, m = filterMonth.value, p = filterPrinciple.value, c = filterCustomer.value;
+            const l = document.getElementById('filterLane') ? document.getElementById('filterLane').value : 'all';
+            const cmd = document.getElementById('filterCommodity') ? document.getElementById('filterCommodity').value : 'all';
+            const s = document.getElementById('filterServiceType') ? document.getElementById('filterServiceType').value : 'all'; // NEW
+
+            // Filter Logic
+            // Note: Lane/Commodity are properties of *MonthlyData*, not the parent Row.
+            // But the current charts aggregate *Rows*. 
+            // We need to filter the *Internal Monthly Data* or filter the Rows if *any* month matches?
+            // BETTER APPROACH: Filter the `monthlyData` array inside the rows?
+            // No, the `calculateKPIs` and `renderCharts` iterates `d.monthlyData`.
+
+            // Let's Clone activeData deeply or filter dynamically in the loop.
+            // A simple way: Filter Rows that *contain* the lane? No, that's sloppy.
+            // We should filter the data PASSED to the render functions.
+
+            // CREATE A DEEP CLONE for Filtering
+            const filteredData = activeData.map(row => {
+                // Check Principle/Customer filters (Parent Level)
+                if (row.year != y) return null;
+                if (p !== 'all' && row.principle != p) return null;
+                if (c !== 'all' && row.customer != c) return null;
+                if (s !== 'all' && row.serviceType != s) return null;
+
+                // Clone row to avoid mutating original
+                const newRow = { ...row, monthlyData: [] };
+
+                // Filter Monthly Data (Lane/Commodity Level)
+                row.monthlyData.forEach(mon => {
+                    if (l !== 'all' && mon.lane !== l) return;
+                    if (cmd !== 'all') {
+                        const cVal = (mon.commodity || "").trim();
+                        if (cVal !== cmd.trim()) return;
+                    }
+                    newRow.monthlyData.push(mon);
+                });
+
+                // if (newRow.monthlyData.length > 0) console.log(`Row Kept: ${newRow.customer} - ${newRow.monthlyData.length} months`);
+
+                // Only keep row if it has relevant monthly data (OR if we want to show 0s?)
+                // If we filter, we likely want to see the contribution of that lane.
+                // But some functions expect 12 months. 
+                // `calculateKPIs` iterates monthlyData, so it's safe.
+                // `renderCharts` iterates monthlyData, needs to handle missing months? 
+                // renderCharts logic: `agg[m.month]` - it expects months to be present in the aggregation bucket.
+
+                return newRow;
+            }).filter(d => d !== null); // Remove nulls
+
+            calculateKPIs(filteredData, m);
+            renderCharts(filteredData);
+            renderTopCustomers(filteredData, m);
+
+            // Pass filteredData to stats/tables to ensure Lane/Commodity filters apply
+            // filters (y, m, p, c) are already applied in filteredData or handled by the function.
+            // But getTraderStats re-filters by p/c. Double filtering is fine.
+            const stats = getTraderStats(filteredData, y, m, p, c);
+            updateTraderKPIs(stats, y, m);
+            renderCustomerHealthChart(filteredData, y, p, c);
+            renderPerformanceTable(filteredData, y, p, c);
+            renderMonthlyAnalysis(filteredData, y, m, p, c);
+        }
+
+        // --- ANALYSIS LOGIC ---
+        function renderMonthlyAnalysis(allData, year, month, principleFilter, customerFilter) {
+            const container = document.getElementById('monthlyAnalysis');
+            if (month === 'all') {
+                container.classList.add('hidden'); return;
+            }
+
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const mIdx = months.indexOf(month);
+            if (mIdx === -1) return;
+
+            // Previous Month identification
+            let prevYear = year, prevMonth = "";
+            if (mIdx === 0) { prevYear = (parseInt(year) - 1).toString(); prevMonth = "Dec"; }
+            else { prevMonth = months[mIdx - 1]; }
+
+            let totalCurr = 0, totalPrev = 0;
+
+            // Aggregation (Global Check for Analysis)
+            const custMap = {};
+            allData.forEach(row => {
+                if (principleFilter !== 'all' && row.principle !== principleFilter) return;
+                if (customerFilter !== 'all' && row.customer !== customerFilter) return;
+
+                const k = row.customer;
+                if (!custMap[k]) custMap[k] = { curr: 0, prev: 0 };
+
+                row.monthlyData.forEach(mDat => {
+                    if (row.year === year && mDat.month === month) {
+                        custMap[k].curr += mDat.revenue;
+                        totalCurr += mDat.revenue;
+                    }
+                    if (row.year === prevYear && mDat.month === prevMonth) {
+                        custMap[k].prev += mDat.revenue;
+                        totalPrev += mDat.revenue;
+                    }
+                });
+            });
+
+            // Categorization
+            const reactivated = [];
+            const growth = [];
+            const decline = [];
+
+            Object.keys(custMap).forEach(k => {
+                const c = custMap[k].curr;
+                const p = custMap[k].prev;
+                const diff = c - p;
+
+                if (diff === 0) return;
+
+                const item = { name: k, diff: diff, curr: c, prev: p };
+
+                if (p === 0 && c > 0) {
+                    reactivated.push(item);
+                } else if (c > p) {
+                    growth.push(item);
+                } else {
+                    decline.push(item);
+                }
+            });
+
+            // Sort by Impact (Magnitude)
+            reactivated.sort((a, b) => b.curr - a.curr); // Biggest IDR value first
+            growth.sort((a, b) => b.diff - a.diff);      // Biggest Growth first
+            decline.sort((a, b) => a.diff - b.diff);     // Biggest Drop first (negative values)
+
+            const totalDiff = totalCurr - totalPrev;
+            const isUp = totalDiff >= 0;
+            const curF = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
+
+            // Generate UI
+            container.classList.remove('hidden');
+
+            const listReact = reactivated.slice(0, 3);
+            const listGrow = growth.slice(0, 3);
+            const listDrop = decline.slice(0, 3);
+
+            let html = `
+                <div class="flex flex-col gap-6">
+                    <!-- Summary Card -->
+                    <div class="${isUp ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold ${isUp ? 'text-green-700' : 'text-red-700'} uppercase opacity-70">
+                                VS ${prevMonth} ${prevYear}
+                            </p>
+                            <h3 class="text-2xl font-bold ${isUp ? 'text-green-800' : 'text-red-800'}">
+                                ${isUp ? '▲' : '▼'} ${curF.format(Math.abs(totalDiff))}
+                            </h3>
+                            <p class="text-xs ${isUp ? 'text-green-600' : 'text-red-600'} mt-1 font-semibold">
+                                Total Revenue is ${isUp ? 'Up' : 'Down'}
+                            </p>
+                        </div>
+                        <div class="h-12 w-12 rounded-full ${isUp ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} flex items-center justify-center">
+                            <i data-feather="${isUp ? 'trending-up' : 'trending-down'}"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3 Column Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            `;
+
+            const renderList = (title, list, colorClass, icon) => `
+                <div class="border border-slate-100 rounded-xl p-4 bg-white shadow-lg flex flex-col h-full">
+                    <div class="flex items-center gap-2 mb-3 border-b border-slate-50 pb-2">
+                        <div class="p-1.5 rounded-md ${colorClass} bg-opacity-20 text-${colorClass.split('-')[1]}-600">
+                             <i data-feather="${icon}" class="w-3 h-3"></i>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase">${title}</h4>
+                    </div>
+                    <div class="space-y-3 flex-1">
+                        ${list.length === 0 ? '<p class="text-xs text-slate-400 italic">No significant data.</p>' : list.map(item => `
+                            <div class="flex justify-between items-start group">
+                                <div class="w-2/3">
+                                    <p class="text-xs font-bold text-slate-700 truncate" title="${item.name}">${item.name}</p>
+                                    <div class="flex gap-2 text-[10px] text-slate-400">
+                                        <span>Prev: ${new Intl.NumberFormat('id-ID', { notation: "compact" }).format(item.prev)}</span>
+                                        <span>➜</span>
+                                        <span>Now: ${new Intl.NumberFormat('id-ID', { notation: "compact" }).format(item.curr)}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-bold ${item.diff > 0 ? 'text-green-600' : 'text-red-600'}">
+                                        ${item.diff > 0 ? '+' : ''}${new Intl.NumberFormat('id-ID', { notation: "compact", compactDisplay: "short" }).format(item.diff)}
+                                    </p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            html += renderList("Reactivated / New", listReact, "bg-indigo-100", "zap");
+            html += renderList("Top Growth", listGrow, "bg-green-100", "trending-up");
+            html += renderList("Top Decline", listDrop, "bg-red-100", "trending-down");
+
+            html += `</div></div>`; // End Grid & Flex Col
+
+            container.innerHTML = html;
+            feather.replace();
+        }
+
+        function calculateKPIs(data, monthFilter) {
+            let r = 0, g = 0, p = 0, w = 0, d = 0;
+            data.forEach(row => row.monthlyData.forEach(m => {
+                if (monthFilter === 'all' || m.month === monthFilter) {
+                    r += m.revenue; g += (m.gp || 0); p += (m.pcs || 0); w += (m.weight || 0); d += (m.dimension || 0);
+                }
+            }));
+            const f = (n, c) => new Intl.NumberFormat('id-ID', c ? { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 } : { maximumFractionDigits: 2 }).format(n);
+            document.getElementById('kpiRevenue').textContent = f(r, true);
+            document.getElementById('kpiGP').textContent = f(g, true);
+            document.getElementById('kpiWeight').textContent = f(w, false);
+            document.getElementById('kpiPcs').textContent = f(p, false);
+            const elDim = document.getElementById('kpiDimension');
+            if (elDim) elDim.textContent = f(d, false);
+        }
+
+        // Stats Logic (Fix: Aggregate first to handle multiple rows per customer)
+        function getTraderStats(allData, year, month, principleFilter, customerFilter) {
+            const aggHistory = {};
+
+            // 1. Aggregate Data
+            allData.forEach(row => {
+                if (principleFilter !== 'all' && row.principle !== principleFilter) return;
+                const k = row.customer;
+                if (!aggHistory[k]) aggHistory[k] = {};
+
+                row.monthlyData.forEach((m, idx) => {
+                    const gIdx = (parseInt(row.year) * 12) + idx;
+                    if (!aggHistory[k][gIdx]) aggHistory[k][gIdx] = {
+                        year: row.year,
+                        month: m.month,
+                        rev: 0,
+                        principle: row.principle, // Keep last or mix (mostly for display)
+                        gIdx: gIdx
+                    };
+                    aggHistory[k][gIdx].rev += m.revenue;
+                });
+            });
+
+            const newTraders = [], lostCustomers = [], regularCustomers = [];
+
+            // 2. Analyze Timeline
+            Object.keys(aggHistory).forEach(cust => {
+                // Convert to sorted array
+                const timeline = Object.values(aggHistory[cust]).sort((a, b) => a.gIdx - b.gIdx);
+
+                timeline.forEach((point, i) => {
+                    // Filter Context
+                    if (point.year != year) return;
+                    if (month !== 'all' && point.month !== month) return;
+
+                    // Helper to get historical revenue safely
+                    // Since we aggregated by gIdx, points are unique per month.
+                    // We just need to check if previous gIdx exists in the timeline
+                    const getRev = (monthsBack) => {
+                        const targetIdx = point.gIdx - monthsBack;
+                        // Find point in timeline (since it is sorted, we could optimize, but find is safe)
+                        const p = timeline.find(t => t.gIdx === targetIdx);
+                        return p ? p.rev : 0;
+                    };
+
+                    const p1 = getRev(1), p2 = getRev(2), p3 = getRev(3);
+
+                    // New / Reactivated: Current > 0, Prev 3 months == 0
+                    if (point.rev > 0 && p1 === 0 && p2 === 0 && p3 === 0) {
+                        if (!newTraders.find(r => r.customer === cust)) {
+                            newTraders.push({ customer: cust, principle: point.principle, month: point.month, rev: point.rev, prev: [p1, p2, p3] });
+                        }
+                    }
+
+                    // Lost: Current == 0 (Wait, point.rev is from data. If rev is 0, it might exist in data as 0 or not exist)
+                    // If point exists and rev is 0, check history.
+                    // If point DOES NOT exist (no sales row), we can't iterate it here.
+                    // ISSUE: "Lost" definition is "Has no revenue".
+                    // If a customer isn't in the Excel for this month, they won't be in 'timeline'.
+                    // BUT `allData` usually explicitly lists months (Jan-Dec) with 0 revenue if the row exists.
+                    // If the row doesn't exist for 2025, they are totally lost.
+                    // Assuming row exists with 0 revenue:
+                    if (point.rev === 0 && p1 === 0 && p2 === 0 && i >= 2) {
+                        // Logic: 3 consec 0 (Curr 0, P1 0, P2 0).
+                        // Check if they were ever active? `i>=2` implies at least 2 monts history.
+                        // We strictly need to check if they imply "Lost" status. 
+                        // Let's stick to the requested logic: Zero Rev for 3 consec months.
+                        if (!lostCustomers.find(r => r.customer === cust)) {
+                            lostCustomers.push({ customer: cust, principle: point.principle, month: point.month, vals: [point.rev, p1, p2] });
+                        }
+                    }
+
+                    // Regular: Current > 0, Prev 2 months > 0
+                    if (point.rev > 0 && p1 > 0 && p2 > 0) {
+                        if (!regularCustomers.find(r => r.customer === cust)) {
+                            regularCustomers.push({ customer: cust, principle: point.principle, month: point.month, vals: [point.rev, p1, p2] });
+                        }
+                    }
+                });
+            });
+            return { newTraders, lostCustomers, regularCustomers };
+        }
+        function updateTraderKPIs(stats, year, month) {
+            document.getElementById('kpiNewTraders').textContent = stats.newTraders.length; newTradersList = stats.newTraders;
+            document.getElementById('kpiLostCustomers').textContent = stats.lostCustomers.length; lostCustomersList = stats.lostCustomers;
+            document.getElementById('kpiRegularCustomers').textContent = stats.regularCustomers.length; regularCustomersList = stats.regularCustomers;
+            const t = (month === 'all') ? `Year ${year}` : `${month} ${year}`;
+            ['ntModalMonth', 'lcModalMonth', 'rcModalMonth'].forEach(id => document.getElementById(id).textContent = t);
+        }
+
+        // --- NEW: Props Handler ---
+        window.handleBudgetChange = function (year, month, val) {
+            localStorage.setItem(`budget_${year}_${month}`, val);
+            const rowRev = document.getElementById(`rev_raw_${year}_${month}`)?.innerText.replace(/\./g, '') || 0;
+            const revVal = parseFloat(rowRev);
+            const budgetVal = parseFloat(val);
+            const achvEl = document.getElementById(`achv_${year}_${month}`);
+            if (achvEl) {
+                if (!budgetVal || budgetVal === 0) {
+                    achvEl.innerText = '-'; achvEl.className = "px-3 py-2 text-right border-b border-slate-100 bg-blue-50/50 font-bold text-slate-400";
+                } else {
+                    const pct = (revVal / budgetVal);
+                    achvEl.innerText = new Intl.NumberFormat('id-ID', { style: 'percent', maximumFractionDigits: 1 }).format(pct);
+                    achvEl.className = `px-3 py-2 text-right border-b border-slate-100 bg-blue-50/50 font-bold ${pct >= 1 ? 'text-green-600' : 'text-orange-500'}`;
+                }
+            }
+        }
+        window.handleSalesChange = function (year, month, val) {
+            localStorage.setItem(`sales_${year}_${month}`, val);
+        }
+        window.handleGlobalSales = function (val) {
+            localStorage.setItem('sales_person_global', val);
+        }
+
+        function renderPerformanceTable(allData, year, principleFilter, customerFilter) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const allAgg = {};
+
+            // 1. Aggregation Logic (Using Sets for Unique Customer Count)
+            allData.forEach(row => {
+                if (principleFilter !== 'all' && row.principle !== principleFilter) return;
+                if (customerFilter !== 'all' && row.customer !== customerFilter) return;
+
+                row.monthlyData.forEach(m => {
+                    const k = `${row.year}-${m.month}`;
+                    if (!allAgg[k]) {
+                        allAgg[k] = { r: 0, customers: new Set() }; // Use Set for unique count
+                    }
+
+                    allAgg[k].r += m.revenue;
+
+                    if (m.revenue > 0) {
+                        // Normalize customer name to avoid case sensitivity issues
+                        const custKey = row.customer.trim().toLowerCase();
+                        allAgg[k].customers.add(custKey);
+                    }
+                });
+            });
+
+            // Initialize Global Sales Input Value
+            const savedGlobal = localStorage.getItem('sales_person_global') || "";
+            const gInput = document.getElementById('globalSalesInput');
+            if (gInput) gInput.value = savedGlobal;
+
+            const curF = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+            const pctF = new Intl.NumberFormat('id-ID', { style: 'percent', maximumFractionDigits: 1 });
+
+            document.getElementById('performanceTableBody').innerHTML = months.map((m, i) => {
+                const key = `${year}-${m}`;
+                // Get Current Data
+                const currRaw = allAgg[key] || { r: 0, customers: new Set() };
+                const currR = currRaw.r;
+                const currC = currRaw.customers.size; // Count unique size
+
+                // Get Previous Data
+                const prevKey = (i === 0) ? `${parseInt(year) - 1}-Dec` : `${year}-${months[i - 1]}`;
+                const prevRaw = allAgg[prevKey] || { r: 0, customers: new Set() };
+                const prevR = prevRaw.r;
+                const prevC = prevRaw.customers.size;
+
+                // Revenue Growth Logic
+                const diffRev = currR - prevR;
+                let growRev = 0;
+                if (prevR > 0) {
+                    growRev = diffRev / prevR;
+                } else if (prevR === 0 && currR > 0) {
+                    growRev = 1; // 100% Growth if starting from 0
+                } else if (prevR === 0 && currR === 0) {
+                    growRev = 0;
+                } else {
+                    // prevR 0, currR < 0 (unlikely for revenue)
+                    growRev = 0;
+                }
+
+                // Active Customer Growth Logic
+                const diffTrad = currC - prevC;
+                let growTrad = 0;
+                if (prevC > 0) {
+                    growTrad = diffTrad / prevC;
+                } else if (prevC === 0 && currC > 0) {
+                    growTrad = 1; // 100% Growth
+                }
+
+                const savedBudget = localStorage.getItem(`budget_${year}_${m}`) || "";
+                const budgetVal = parseFloat(savedBudget) || 0;
+                const achv = budgetVal > 0 ? currR / budgetVal : 0;
+
+                const rc = growRev > 0 ? 'text-green-600' : (growRev < 0 ? 'text-red-600' : 'text-slate-500');
+                const tc = growTrad > 0 ? 'text-green-600' : (growTrad < 0 ? 'text-red-600' : 'text-slate-500');
+
+                return `
+                    <tr class="hover:bg-pink-50 transition border-b border-slate-100 ${i % 2 === 0 ? 'bg-white' : 'bg-pink-50/30'}">
+                        <td class="px-3 py-2 font-bold text-slate-700 border-b border-slate-100">${m}</td>
+                        <td class="px-3 py-2 text-right border-b border-slate-100 font-medium tracking-tight">
+                            <span id="rev_raw_${year}_${m}" class="hidden">${currR}</span>${curF.format(currR)}
+                        </td>
+                        <td class="px-3 py-2 text-right border-b border-slate-100 ${rc} tracking-tight text-xs">${curF.format(diffRev)}</td>
+                        <td class="px-3 py-2 text-right border-b border-slate-100 ${rc} text-xs font-bold">${pctF.format(growRev)}</td>
+                        
+                        <td class="px-3 py-2 text-right border-b border-slate-100 bg-pink-50/50 p-0">
+                            <input type="number" 
+                                class="w-full h-full bg-transparent text-right px-2 py-2 outline-none text-slate-600 text-xs focus:bg-white focus:ring-1 focus:ring-pink-400 placeholder-slate-300" 
+                                placeholder="Target..." 
+                                value="${savedBudget}"
+                                oninput="handleBudgetChange('${year}', '${m}', this.value)"
+                            >
+                        </td>
+                        <td id="achv_${year}_${m}" class="px-3 py-2 text-right border-b border-slate-100 bg-pink-50/50 font-bold ${achv >= 1 ? 'text-green-600' : (budgetVal > 0 ? 'text-orange-500' : 'text-slate-400')}">
+                            ${budgetVal > 0 ? pctF.format(achv) : '-'}
+                        </td>
+                        
+                        <td class="px-3 py-2 text-right border-b border-slate-100">${currC}</td>
+                        <td class="px-3 py-2 text-right border-b border-slate-100 ${tc}">${diffTrad > 0 ? '+' : ''}${diffTrad}</td>
+                        <td class="px-3 py-2 text-right border-b border-slate-100 ${tc} text-xs font-bold">${pctF.format(growTrad)}</td>
+                    </tr>
+                 `;
+            }).join('');
+
+            // Footer Update (if not exists)
+            const footer = document.querySelector('footer');
+            if (footer) {
+                footer.innerHTML = `
+                   <div class="flex flex-col items-center gap-2">
+                        <img src="zensheet_logo.jpg" alt="Zensheet" class="h-6 w-auto opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition duration-300">
+                        <p class="text-sm text-slate-500 font-medium">Copyright &copy; Zensheet - <a href="https://zensheet.my.id" target="_blank" class="text-blue-600 hover:text-blue-700 hover:underline">zensheet.my.id</a></p>
+                   </div>
+                `;
+            }
+        }
+
+        // Charts & Other Renders
+        function renderTopCustomers(data, mf) {
+            let m = {}; data.forEach(r => { const k = r.customer; if (!m[k]) m[k] = { n: k, p: r.principle, r: 0, g: 0 }; r.monthlyData.forEach(x => { if (mf === 'all' || x.month === mf) { m[k].r += x.revenue; m[k].g += x.gp; } }) });
+            const s = Object.values(m).sort((a, b) => b.r - a.r).slice(0, 10);
+            document.getElementById('topCustomerTable').innerHTML = s.map(c => `<tr><td class="px-6 py-3 font-medium">${c.n}</td><td class="px-6 py-3 text-xs text-slate-500">${getPrincipleLogo(c.p)}</td><td class="px-6 py-3 text-right font-bold">${new Intl.NumberFormat('id-ID').format(c.r)}</td><td class="px-6 py-3 text-right text-green-600">${new Intl.NumberFormat('id-ID').format(c.g)}</td></tr>`).join('');
+            document.getElementById('topCustSubtitle').innerText = `${filterYear.value} - ${mf}`;
+        }
+        function renderCustomerHealthChart(data, y, p, c) {
+            const ms = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const ds = { n: [], l: [], r: [] };
+            ms.forEach(m => { const s = getTraderStats(data, y, m, p, c); ds.n.push(s.newTraders.length); ds.l.push(s.lostCustomers.length); ds.r.push(s.regularCustomers.length); });
+            if (charts['hc']) charts['hc'].destroy();
+            charts['hc'] = new Chart(document.getElementById('chartCustomerHealth').getContext('2d'), {
+                type: 'line', data: { labels: ms, datasets: [{ label: 'New', data: ds.n, borderColor: '#2563eb', tension: 0.3 }, { label: 'Regular', data: ds.r, borderColor: '#16a34a', tension: 0.3 }, { label: 'Lost', data: ds.l, borderColor: '#dc2626', tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        function renderCharts(data) {
+            const agg = {};["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].forEach(m => agg[m] = { r: 0, g: 0, w: 0, p: 0 });
+            data.forEach(r => r.monthlyData.forEach(m => { if (agg[m.month]) { agg[m.month].r += m.revenue; agg[m.month].g += m.gp; agg[m.month].w += m.weight; agg[m.month].p += m.pcs; } }));
+            const l = Object.keys(agg);
+            const mkC = (id, l, d, c) => {
+                if (charts[id]) charts[id].destroy();
+                const ctx = document.getElementById(id).getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, 0, 400);
+                grad.addColorStop(0, c); grad.addColorStop(1, '#ffffff00');
+
+                charts[id] = new Chart(ctx, {
+                    type: 'line', data: { labels: l, datasets: [{ data: d, borderColor: c, backgroundColor: grad, fill: true, tension: 0.3, pointRadius: 2, pointHoverRadius: 6 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }, hover: { mode: 'nearest', intersect: true }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: '#e2e8f0' } }, x: { grid: { display: false } } } }
+                });
+            };
+            mkC('chartRevenue', l, l.map(m => agg[m].r), '#2563eb');
+            mkC('chartGP', l, l.map(m => agg[m].g), '#10b981');
+            mkC('chartWeight', l, l.map(m => agg[m].w), '#f59e0b');
+            mkC('chartPcs', l, l.map(m => agg[m].p), '#8b5cf6');
+        }
+
+        // --- DATA ENRICHMENT ---
+        function enrichSalesData(salesData) {
+            if (!window.shipmentData || window.shipmentData.length === 0) return;
+
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const clean = (str) => (str || "").toLowerCase().replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').replace(/[^\w\s]/gi, '').replace(/\s+/g, ' ').trim();
+
+            // 1. CREATE PERFORMANCE INDEX
+            const index = new Map();
+            window.shipmentData.forEach(s => {
+                if (!s.customer || !s.date) return;
+                const d = new Date(s.date);
+                if (isNaN(d.getTime())) return;
+
+                const cKey = clean(s.customer);
+                const yKey = d.getFullYear().toString();
+                const mKey = months[d.getMonth()];
+                const key = `${cKey}|${yKey}|${mKey}`;
+
+                if (!index.has(key)) index.set(key, []);
+                index.get(key).push(s);
+            });
+
+            // 2. ENRICH WITH INDEX O(1)
+            salesData.forEach(row => {
+                const cKey = clean(row.customer);
+                row.monthlyData.forEach(m => {
+                    const key = `${cKey}|${row.year}|${m.month}`;
+                    const matches = index.get(key);
+
+                    if (matches && matches.length > 0) {
+                        const getMode = (arr) => {
+                            if (arr.length === 0) return "";
+                            const map = {}; let maxEl = arr[0], maxCount = 1;
+                            arr.forEach(el => {
+                                map[el] = (map[el] || 0) + 1;
+                                if (map[el] > maxCount) { maxEl = el; maxCount = map[el]; }
+                            });
+                            return maxEl;
+                        };
+                        m.lane = getMode(matches.map(x => x.lane));
+                        m.commodity = getMode(matches.map(x => x.commodity));
+                    }
+                });
+            });
+            console.log("Performance Enrichment Completed using Indexed Lookup.");
+        }
+
+        function getPrincipleLogo(name) {
+            const n = name ? name.toUpperCase().trim() : '';
+
+            if (n.includes('SF')) {
+                return `<div class="flex items-center gap-2">
+                            <img src="sf_logo.png" alt="${name}" class="h-5 w-5 object-contain" onerror="this.style.display='none'">
+                            <span class="font-medium text-slate-700">${name}</span>
+                        </div>`;
+            }
+
+            let domain = '';
+            if (n.includes('UPS')) domain = 'ups.com';
+            else if (n.includes('FEDEX') || n.includes('FX')) domain = 'fedex.com';
+            else if (n.includes('DHL')) domain = 'dhl.com';
+            else if (n.includes('COSCO')) domain = 'coscoshipping.com';
+            else if (n.includes('ONE')) domain = 'one-line.com';
+            else if (n.includes('EVERGREEN')) domain = 'evergreen-marine.com';
+            else if (n.includes('MAERSK')) domain = 'maersk.com';
+            else if (n.includes('MSC')) domain = 'msc.com';
+
+            if (domain) {
+                return `<div class="flex items-center gap-2">
+                            <img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" alt="${name}" class="h-5 w-5 object-contain" onerror="this.style.display='none'">
+                            <span class="font-medium text-slate-700">${name}</span>
+                        </div>`;
+            }
+            return `<span class="font-medium text-slate-500">${name}</span>`;
+        }
+
+        function showNewTraderModal() { document.getElementById('ntTableBody').innerHTML = genTable(newTradersList, 'blue'); document.getElementById('ntModal').classList.remove('opacity-0', 'pointer-events-none'); }
+        function showLostCustomerModal() { document.getElementById('lcTableBody').innerHTML = genTable(lostCustomersList, 'red'); document.getElementById('lcModal').classList.remove('opacity-0', 'pointer-events-none'); }
+        function showRegularCustomerModal() { document.getElementById('rcTableBody').innerHTML = genTable(regularCustomersList, 'green'); document.getElementById('rcModal').classList.remove('opacity-0', 'pointer-events-none'); }
+        function genTable(l, c) { if (!l || l.length == 0) return `<tr><td colspan="4" class="text-center p-4 text-slate-400">No data</td></tr>`; const cl = c == 'red' ? 'text-red-600' : c == 'green' ? 'text-green-600' : 'text-blue-600'; return l.map(i => `<tr><td class="px-4 py-2 font-medium">${i.customer}</td><td class="px-4 py-2 text-xs text-slate-500">${getPrincipleLogo(i.principle)}</td><td class="px-4 py-2 text-right font-bold ${cl}">${new Intl.NumberFormat('id-ID').format(i.rev || i.vals[0])}</td><td class="px-4 py-2 text-right text-xs text-slate-400">History</td></tr>`).join(''); }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('opacity-0', 'pointer-events-none')); }
+        feather.replace();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script>
+        // --- DATA PERSISTENCE ---
+        localforage.config({
+            name: 'SalesDashboardPro',
+            storeName: 'sales_data'
+        });
+
+        // --- SHIPMENT LIST HANDLERS ---
+        const shipmentInput = document.getElementById('shipmentInput');
+        shipmentInput.addEventListener('change', (e) => { if (e.target.files.length) processShipmentFile(e.target.files[0]); });
+
+        async function processShipmentFile(file) {
+            try {
+                showToast("Parsing Shipment List...");
+                const data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+
+                            // 1. Find 'Shipment list' sheet or use first sheet
+                            let sheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('shipment list')) || workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[sheetName];
+
+                            // 2. Find Header Row Dynamically
+                            const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            let headerRowIdx = 0;
+                            for (let i = 0; i < Math.min(aoa.length, 20); i++) {
+                                const rowStr = (aoa[i] || []).join(" ").toLowerCase();
+                                if (rowStr.includes("nama company") || rowStr.includes("destination") || rowStr.includes("pick up date")) {
+                                    headerRowIdx = i;
+                                    break;
+                                }
+                            }
+                            console.log(`Shipment Header found at row: ${headerRowIdx}`);
+
+                            // 3. Parse with correct header
+                            const raw = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIdx, defval: "" });
+                            console.log("Raw Shipment Data Preview:", raw.slice(0, 3));
+                            resolve(raw);
+                        } catch (err) { reject(err); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+
+                // Filter & Normalize
+                const cleanData = data.map(r => {
+                    const get = (k) => {
+                        const key = Object.keys(r).find(x => x.toLowerCase().trim().includes(k.toLowerCase()));
+                        return key ? r[key] : null;
+                    };
+
+                    // Helper for multiple keywords
+                    const getAny = (keywords) => {
+                        const key = Object.keys(r).find(x => {
+                            const k = x.toLowerCase().trim();
+                            return keywords.some(hw => k.includes(hw));
+                        });
+                        return key ? r[key] : null;
+                    };
+
+                    const dateVal = get('Pick Up Date') || get('Date') || get('Tanggal');
+                    let dateStr = "";
+                    if (dateVal) {
+                        if (typeof dateVal === 'number') {
+                            const d = new Date(Math.round((dateVal - 25569) * 864e5));
+                            dateStr = d.toISOString().split('T')[0];
+                        } else if (typeof dateVal === 'string') {
+                            const parts = dateVal.split(/[/-]/);
+                            if (parts.length === 3) {
+                                if (parts[0].length === 4) {
+                                    dateStr = dateVal;
+                                } else {
+                                    let d = parseInt(parts[0]), m = parseInt(parts[1]), y = parseInt(parts[2]);
+                                    if (y < 100) y += 2000;
+                                    const dateObj = new Date(y, m - 1, d);
+                                    if (!isNaN(dateObj.getTime())) dateStr = dateObj.toISOString().split('T')[0];
+                                }
+                            } else {
+                                dateStr = dateVal;
+                            }
+                        }
+                    }
+
+                    // Normalize Customer
+                    let rawCust = (getAny(['nama company', 'shipper', 'customer']) || "Unknown").toString();
+                    let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim();
+                    cleanCust = cleanCust.replace(/[^\w\s]/gi, '').replace(/\s+/g, ' '); // Remove punctuation
+
+                    // Lane Logic
+                    const type = getAny(['export', 'import', 'service', 'svc']) || "Export";
+                    const isImport = type.toString().toLowerCase().includes('import');
+
+                    const destination = getAny(['destination', 'dest', 'country', 'negara', 'tujuan']) || "";
+                    const origin = getAny(['origin', 'asal']) || "";
+                    const commodity = getAny(['produk', 'product', 'commodity', 'komoditas', 'barang', 'desc']) || "";
+
+                    const lane = isImport ? origin : destination;
+
+                    return {
+                        customer: cleanCust, // Normalized
+                        origin: origin,
+                        destination: destination,
+                        lane: lane,
+                        type: type,
+                        commodity: commodity,
+                        date: dateStr
+                    };
+                }).filter(r => r.customer && r.customer !== "Unknown" && r.customer.length > 2);
+
+                console.log("Cleaned Shipment Data (First 3):", cleanData.slice(0, 3));
+                await saveDataToStorage(cleanData, 'shipmentData');
+                window.shipmentData = cleanData;
+
+                // Re-Enrich and Re-Populate Filters
+                if (allData && allData.length > 0) {
+                    enrichSalesData(allData);
+                    initFilters(); // This populates the dropdowns!
+                    updateDashboard();
+                }
+
+                showToast("Shipment List Processed & Linked!");
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to parse Shipment List: " + err.message);
+            }
+        }
+
+        async function saveDataToStorage(data, key = 'rawSheetData') {
+            try {
+                await localforage.setItem(key, data);
+                showToast(`${key === 'rawSheetData' ? 'Sales' : 'Shipment'} Data Saved!`);
+            } catch (err) {
+                console.error("Save failed:", err);
+                alert("Failed to save data locally (Quota exceeded?)");
+            }
+        }
+
+        async function loadDataFromStorage() {
+            try {
+                const salesData = await localforage.getItem('rawSheetData');
+                const shipData = await localforage.getItem('shipmentData');
+
+                if (shipData) {
+                    window.shipmentData = shipData;
+                }
+
+                if (salesData && salesData.length > 0) {
+                    window.rawSheetData = salesData;
+                    // We need to re-run the processing logic. 
+                    // Assumes processRawData is globally available (it is in the file)
+                    if (typeof processRawData === 'function') {
+                        allData = processRawData(salesData);
+
+                        // FIX: Enrich BEFORE initFilters so dropdowns get populated
+                        enrichSalesData(allData);
+
+                        initFilters();
+                        if (document.querySelector("#filterYear option[value='2025']")) filterYear.value = "2025";
+                        updateDashboard();
+
+                        const upArea = document.getElementById('uploadArea');
+                        const dashContent = document.getElementById('dashboardContent');
+                        if (upArea) upArea.classList.add('hidden');
+                        if (dashContent) dashContent.classList.remove('hidden');
+
+                        showToast("Restored Data from Storage");
+                    }
+                }
+            } catch (err) {
+                console.error("Load failed:", err);
+            }
+        }
+
+        async function clearStorage() {
+            if (confirm("Are you sure? This will delete all saved sales data.")) {
+                await localforage.removeItem('rawSheetData');
+                await localforage.removeItem('shipmentData');
+                location.reload();
+            }
+        }
+
+        function showToast(msg) {
+            const div = document.createElement('div');
+            div.className = 'fixed bottom-4 right-4 bg-slate-800 text-white px-4 py-2 rounded shadow-lg z-50 animate-bounce';
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        // Initialize Loading
+        document.addEventListener('DOMContentLoaded', async () => {
+            // FORCE RESET for Schema Update await Scan
+            const CURRENT_VERSION = 'v1.16-smart-month-scan';
+            const savedVersion = localStorage.getItem('app_data_version');
+
+            if (savedVersion !== CURRENT_VERSION) {
+                console.log("New version detected. Clearing old data...");
+                await localforage.clear();
+                localStorage.setItem('app_data_version', CURRENT_VERSION);
+                showToast("System Updated: Please Re-Upload Files");
+            }
+
+            loadDataFromStorage();
+        });
+    </script>
+</body>
+
+</html>
