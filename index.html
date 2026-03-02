@@ -1006,7 +1006,42 @@
             return newPipe;
         }
 
-        function cleanNum(val) { if (typeof val === 'number') return val; if (!val) return 0; let s = val.toString().replace(/[^0-9.-]/g, ''); return parseFloat(s) || 0; }
+        function cleanNum(val) {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            let s = val.toString().trim();
+            // Remove everything except numbers, dots, commas, and minus
+            s = s.replace(/[^0-9.,-]/g, '');
+            if (!s) return 0;
+
+            // Handle European/Indonesian style: 1.234,56 -> 1234.56
+            // Handle US style: 1,234.56 -> 1234.56
+            const hasComma = s.includes(',');
+            const hasDot = s.includes('.');
+
+            if (hasComma && hasDot) {
+                if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                    // Indonesian: 1.234,56
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else {
+                    // US: 1,234.56
+                    s = s.replace(/,/g, '');
+                }
+            } else if (hasComma) {
+                // Only comma: 123,45 or 1,234 (Ambiguous, but usually decimal in ID)
+                // If it's a comma used as thousands, it would usually have 3 digits after.
+                const parts = s.split(',');
+                if (parts[parts.length - 1].length === 3 && parts.length > 1) s = s.replace(/,/g, ''); // Thousands
+                else s = s.replace(/,/g, '.'); // Decimal
+            } else if (hasDot) {
+                // Only dot: 123.45 or 1.234 (Ambiguous)
+                const parts = s.split('.');
+                // If part after dot is 3 digits, it's likely a thousands separator in ID
+                if (parts[parts.length - 1].length === 3 && parts.length > 1) s = s.replace(/\./g, '');
+                // Otherwise treat as decimal
+            }
+            return parseFloat(s) || 0;
+        }
 
         function processRawData(rows) {
             // Hardcoded Structure for "Rev Rifai"
@@ -1028,17 +1063,19 @@
                 }
             });
 
-            // 2. Identify Month Blocks (Jan) in Row 3
-            // AND Dynamically finding Metrics offsets for each block
+            // 2. Identify Month Blocks in Row 3
+            const monthsListLong = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
             const yearBlocks = [];
 
-            // Loop through header row to find 'Jan'
             (rows[headerRowIdx] || []).forEach((cell, idx) => {
                 const val = (cell || "").toString().toLowerCase().trim();
-                if (val === 'jan') {
-                    // Found a Year Block start.
-                    // NOW SCAN SUB-HEADERS (Row 4) to find Rev, GP, etc. relative to this Jan
-                    // We expect metrics to be within the next few columns (e.g. 0 to 5)
+                // Find ANY month to start a block, though Jan is standard
+                if (monthsListLong.includes(val)) {
+                    // Check if this is a new block or just a continuation
+                    // Usually we look for 'Jan' to demarcate a new YEAR block
+                    if (val !== 'jan' && yearBlocks.length > 0) return;
+
+                    const foundMonthIdx = monthsListLong.indexOf(val);
                     let offsetRev = 2; let offsetGP = 3; let offsetWgt = 1; let offsetPcs = 0; let offsetDim = 4;
 
                     // Scan next 8 columns in Metric Row
@@ -1052,23 +1089,27 @@
                         else if (mVal.includes("dim") || mVal.includes("vol") || mVal.includes("cbm")) offsetDim = k;
                     }
 
-                    // Determine Stride (Gap between Jan and Feb metrics)
-                    const janRevIdx = idx + offsetRev;
-                    let detectedStride = 4; // Default fallback
-
-                    // Scan forward to find the next "Rev" or next Month name
-                    for (let k = 1; k < 20; k++) {
-                        const nextValMetric = (metricRow[janRevIdx + k] || "").toString().toLowerCase().trim();
-                        if (nextValMetric.includes("rev") || nextValMetric.includes("amount") || nextValMetric.includes("omset")) {
-                            detectedStride = k;
-                            console.log(`Detected Dynamic Stride: ${detectedStride} for Jan at ${idx}`);
-                            break;
+                    // Strategy: Find absolute column index for each month (Jan-Dec) instead of using Stride
+                    const headerRow = rows[headerRowIdx] || [];
+                    const absoluteMonths = {}; // e.g. { 0: col_idx_for_jan, 1: col_idx_for_feb }
+                    
+                    for (let m = 0; m < 12; m++) {
+                        const targetMonth = monthsListLong[m];
+                        // start searching from the year's start col, up to a reasonable limit (e.g. +60 cols)
+                        for (let k = idx; k < Math.min(headerRow.length, idx + 60); k++) {
+                            const hv = (headerRow[k] || "").toString().toLowerCase().trim();
+                            if (hv === targetMonth) {
+                                absoluteMonths[m] = k;
+                                break;
+                            }
                         }
                     }
 
                     yearBlocks.push({
                         startCol: idx,
-                        stride: detectedStride,
+                        startMonthIdx: foundMonthIdx, // although we mapped absolutely, this indicates first month
+                        absoluteMonths: absoluteMonths,
+                        fallBackStride: 4, // Just in case a month header is totally missing
                         offsets: { rev: offsetRev, gp: offsetGP, wgt: offsetWgt, pcs: offsetPcs, dim: offsetDim }
                     });
                 }
@@ -1102,71 +1143,76 @@
                 if (!r || r.length < 5) continue;
 
                 // AGGRESSIVE FILTER: Exclude "Total" rows
-                // Check multiple columns for total-related keywords
                 let isTotalRow = false;
-                for (let k = 0; k < Math.min(r.length, 10); k++) {
+                for (let k = 0; k < Math.min(r.length, 12); k++) {
                     const cellVal = (r[k] || "").toString().toLowerCase();
-                    if (cellVal.includes("total") || cellVal.includes("jumlah") || cellVal.includes("grand") || cellVal.includes("summary")) {
+                    if (cellVal === "total" || cellVal.includes("grand total") || cellVal.includes("jumlah") || cellVal.includes("summary")) {
                         isTotalRow = true;
                         break;
                     }
                 }
+                if ((r[4] || "").toString().toLowerCase().includes("total")) isTotalRow = true;
                 if (isTotalRow) continue;
 
-                // Customer Name at Column Index 4
+                // Customer Name
                 let rawCust = (r[4] || "").toString().trim();
                 if (!rawCust || rawCust.length < 2) continue;
 
-                // Normalize Customer
                 let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim();
                 cleanCust = cleanCust.replace(/\s+/g, ' ');
 
-                const principle = (r[1] || "General").toString();
-
-                // Process each year block found
+                // Process each year block
                 yearBlocks.forEach(block => {
                     if (!block.year) return;
 
                     const monthlyData = [];
-                    const startIdx = block.startCol;
                     const offsets = block.offsets;
-                    const blockStride = block.stride;
 
                     const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
                     monthsList.forEach((mName, mIdx) => {
-                        const monthStartCol = startIdx + (mIdx * blockStride);
+                        let monthStartCol;
+                        if (block.absoluteMonths[mIdx] !== undefined) {
+                            monthStartCol = block.absoluteMonths[mIdx];
+                        } else {
+                            // Fallback if header was missing, guess based on stride from first found month
+                            monthStartCol = block.startCol + ((mIdx - block.startMonthIdx) * block.fallBackStride);
+                        }
+
                         if (monthStartCol >= r.length) return;
+
+                        // Scan local metric row underneath this month to find accurate offset specifically for this month!
+                        // This handles asymmetrical columns per month (e.g. Jan has 3 cols, Feb has 4 config)
+                        let locRev = offsets.rev, locGp = offsets.gp, locWgt = offsets.wgt, locPcs = offsets.pcs, locDim = offsets.dim;
+                        
+                        const metricRow = rows[Math.min(headerRowIdx + 1, rows.length - 1)] || [];
+                        for(let k=0; k < 6; k++) {
+                            const mv = (metricRow[monthStartCol + k] || "").toString().toLowerCase().trim();
+                            if(mv.includes("rev")) locRev = k;
+                            else if(mv.includes("gp") || mv.includes("gross")) locGp = k;
+                            else if(mv.includes("weight") || mv.includes("wgt")) locWgt = k;
+                            else if(mv.includes("pcs")) locPcs = k;
+                            else if(mv.includes("dim") || mv.includes("vol") || mv.includes("cbm")) locDim = k;
+                        }
 
                         const getVal = (offset) => {
                             const valIdx = monthStartCol + offset;
-                            const v = r[valIdx];
-                            if (typeof v === 'number') return v;
-                            if (typeof v === 'string') {
-                                let s = v.replace(/[^0-9.,-]/g, '');
-                                if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
-                                    if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
-                                    else s = s.replace(/,/g, '');
-                                } else if (s.indexOf('.') > -1) s = s.replace(/\./g, '');
-                                else if (s.indexOf(',') > -1) s = s.replace(/,/g, '.');
-                                return parseFloat(s) || 0;
-                            }
-                            return 0;
+                            return cleanNum(r[valIdx]);
                         };
 
                         monthlyData.push({
                             month: capitalize(mName),
-                            revenue: getVal(offsets.rev),
-                            gp: getVal(offsets.gp),
-                            weight: getVal(offsets.wgt),
-                            pcs: getVal(offsets.pcs),
-                            dimension: getVal(offsets.dim)
+                            revenue: getVal(locRev),
+                            gp: getVal(locGp),
+                            weight: getVal(locWgt),
+                            pcs: getVal(locPcs),
+                            dimension: getVal(locDim)
                         });
                     });
 
                     cleanData.push({
-                        customer: cleanCust,
-                        principle: principle,
+                        customer: cleanCust.toUpperCase(),
+                        principle: (r[1] || "General").toString().toUpperCase().trim(),
                         serviceType: (r[2] || "Unknown").toString().toUpperCase().trim(),
                         year: block.year,
                         monthlyData: monthlyData
@@ -1210,23 +1256,53 @@
 
         async function processFile(file) {
             try {
-                uploadArea.innerHTML = `<div class="animate-pulse text-blue-600 font-bold">Parsing...</div>`;
-                allData = await parseAndProcessExcel(file);
-                if (allData.length === 0) throw new Error("No data found");
+                const newData = await parseAndProcessExcel(file);
+                if (newData.length === 0) throw new Error("No data found");
 
-                enrichSalesData(allData); // Enrich immediately
+                // MERGE logic: Keep history, update with new data
+                allData = mergeSalesData(allData, newData);
+
+                enrichSalesData(allData);
                 initFilters();
-
                 uploadArea.style.display = 'none'; dashboardContent.classList.remove('hidden');
-                if (document.querySelector("#filterYear option[value='2025']")) filterYear.value = "2025";
                 updateDashboard();
             } catch (err) {
-                alert(err); uploadArea.innerHTML = `<button onclick="location.reload()">Retry</button>`;
+                alert(err);
+                if (uploadArea) uploadArea.innerHTML = `<button onclick="location.reload()">Retry</button>`;
             }
         }
 
+        function mergeSalesData(existing, incoming) {
+            const map = new Map();
+            const genKey = (r) => `${r.customer.trim().toUpperCase()}|${r.principle.trim().toUpperCase()}|${r.serviceType.trim().toUpperCase()}|${r.year}`;
+
+            existing.forEach(r => {
+                map.set(genKey(r), r);
+            });
+            incoming.forEach(r => {
+                const key = genKey(r);
+                if (map.has(key)) {
+                    const oldRow = map.get(key);
+                    r.monthlyData.forEach(mIn => {
+                        const mOld = oldRow.monthlyData.find(m => m.month === mIn.month);
+                        if (mOld) {
+                            // Only update if incoming has non-zero values to avoid clearing old data
+                            if (mIn.revenue !== 0 || mIn.gp !== 0 || mIn.weight !== 0 || mIn.pcs !== 0) {
+                                Object.assign(mOld, mIn);
+                            }
+                        } else {
+                            oldRow.monthlyData.push(mIn);
+                        }
+                    });
+                } else {
+                    map.set(key, r);
+                }
+            });
+            return Array.from(map.values());
+        }
+
         function updateYearFilter() {
-            const pipeline = JSON.parse(localStorage.getItem('pipeline_myrna') || '[]');
+            const pipeline = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
             const pipeYears = pipeline.map(p => {
                 const d = new Date(p.ready);
                 return !isNaN(d.getTime()) ? d.getFullYear().toString() : null;
@@ -1383,9 +1459,10 @@
             // Pass filteredData to stats/tables to ensure Lane/Commodity filters apply
             // filters (y, m, p, c) are already applied in filteredData or handled by the function.
             // But getTraderStats re-filters by p/c. Double filtering is fine.
-            const stats = getTraderStats(filteredData, y, m, p, c);
+            // Pass ALL DATA to stats to ensure history is available
+            const stats = getTraderStats(activeData, y, m, p, c);
             updateTraderKPIs(stats, y, m);
-            renderCustomerHealthChart(filteredData, y, p, c);
+            renderCustomerHealthChart(activeData, y, p, c);
             renderPerformanceTable(filteredData, y, p, c);
             renderMonthlyAnalysis(filteredData, y, m, p, c);
         }
@@ -1534,11 +1611,20 @@
 
         function calculateKPIs(data, monthFilter) {
             let r = 0, g = 0, p = 0, w = 0, d = 0;
+
+            // Debug: per-month breakdown
+            const monthTotals = {};
+            const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            monthOrder.forEach(m => monthTotals[m] = 0);
+
             data.forEach(row => row.monthlyData.forEach(m => {
                 if (monthFilter === 'all' || m.month === monthFilter) {
                     r += m.revenue; g += (m.gp || 0); p += (m.pcs || 0); w += (m.weight || 0); d += (m.dimension || 0);
                 }
+                // Always track for debug
+                if (monthTotals[m.month] !== undefined) monthTotals[m.month] += m.revenue;
             }));
+
             const f = (n, c) => new Intl.NumberFormat('id-ID', c ? { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 } : { maximumFractionDigits: 2 }).format(n);
             document.getElementById('kpiRevenue').textContent = f(r, true);
             document.getElementById('kpiGP').textContent = f(g, true);
@@ -1546,6 +1632,15 @@
             document.getElementById('kpiPcs').textContent = f(p, false);
             const elDim = document.getElementById('kpiDimension');
             if (elDim) elDim.textContent = f(d, false);
+
+            // Show debug breakdown
+            const dbg = document.getElementById('debugInfo');
+            if (dbg) {
+                const rows = monthOrder.map(mo => `<td class="px-2">${mo}</td><td class="px-2 text-right font-mono">${f(monthTotals[mo], true)}</td>`);
+                dbg.innerHTML = `<div class="mt-2 text-xs"><strong>📊 Revenue Per Bulan (${filterYear.value}):</strong>
+                <table class="mt-1 border-collapse"><tr>${rows.slice(0,6).map(r=>`<tr>${r}</tr>`).join('')}${rows.slice(6).map(r=>`<tr>${r}</tr>`).join('')}</tr></table>
+                <div class="mt-1 text-slate-500">Total rows in filteredData: ${data.length} | Active monthFilter: <b>${monthFilter}</b></div></div>`;
+            }
         }
 
         // Stats Logic (Fix: Aggregate first to handle multiple rows per customer)
@@ -2081,6 +2176,7 @@
             if (confirm("Are you sure? This will delete all saved sales data.")) {
                 await localforage.removeItem('rawSheetData');
                 await localforage.removeItem('shipmentData');
+                localStorage.removeItem('pipeline_sales_dashboard');
                 location.reload();
             }
         }
