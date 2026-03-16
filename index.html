@@ -83,7 +83,7 @@
                 </div>
 
                 <span class="font-bold text-slate-700 text-lg tracking-tight">Sales Dashboard <span
-                        class="text-blue-600">PRO</span></span>
+                        class="text-blue-600">PRO v1.16</span></span>
             </div>
             <div class="h-10 w-px bg-slate-200 mx-2"></div>
 
@@ -116,7 +116,7 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <button onclick="clearStorage()"
+            <button onclick="clearAllData()"
                 class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition border border-red-200"
                 title="Reset / Clear Data">
                 <i data-feather="trash-2" class="w-4 h-4"></i>
@@ -166,309 +166,331 @@
             <h3 class="text-lg font-bold text-slate-700">Upload Data Sales</h3>
             <p class="text-slate-500 text-sm mt-1">Drag & drop file Excel disini</p>
             <p class="text-xs text-slate-400 mt-2">Support: Multi-Year (2024, 2025...) side-by-side</p>
+            <div class="mt-4" onclick="event.stopPropagation()">
+                <button onclick="clearAllData()"
+                    class="text-red-500 text-xs font-bold hover:underline bg-transparent border-none cursor-pointer p-1">
+                    [ RESET ALL DASHBOARD DATA ]
+                </button>
+            </div>
         </div>
 
         <div id="dashboardContent" class="hidden space-y-6">
-            <!-- Filters -->
-            <div
-                class="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-wrap gap-4 items-center justify-between">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <div class="flex items-center gap-2 text-slate-500 text-sm font-bold"><i data-feather="filter"
-                            class="w-4 h-4"></i> Filters:</div>
-                    <select id="filterYear"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold bg-slate-50"></select>
-                    <select id="filterServiceType"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
-                        <option value="all">All Services</option>
-                    </select>
-                    <select id="filterMonth"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <!-- ... -->
-                        <option value="all">All Months (YTD)</option>
-                        <option value="Jan">Jan</option>
-                        <option value="Feb">Feb</option>
-                        <option value="Mar">Mar</option>
-                        <option value="Apr">Apr</option>
-                        <option value="May">May</option>
-                        <option value="Jun">Jun</option>
-                        <option value="Jul">Jul</option>
-                        <option value="Aug">Aug</option>
-                        <option value="Sep">Sep</option>
-                        <option value="Oct">Oct</option>
-                        <option value="Nov">Nov</option>
-                        <option value="Dec">Dec</option>
-                    </select>
-                    <select id="filterLane"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-emerald-700 bg-emerald-50 border-emerald-200">
-                        <option value="all">Lane (Dest/Origin)</option>
-                    </select>
-                    <select id="filterCommodity"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-purple-700 bg-purple-50 border-purple-200">
-                        <option value="all">Commodity</option>
-                    </select>
-                    <div class="w-px h-6 bg-slate-300 mx-2"></div>
-                    <select id="filterPrinciple"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">All Principles</option>
-                    </select>
-                    <select id="filterCustomer"
-                        class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]">
-                        <option value="all">All Customers</option>
-                    </select>
+            <!-- TAB SWITCHER -->
+            <div class="flex border-b border-slate-200 mb-2">
+                <button onclick="switchTab('main')" id="tabMain"
+                    class="px-6 py-2 font-bold text-sm border-b-2 border-blue-600 text-blue-600 transition">Main
+                    Dashboard</button>
+                <button onclick="switchTab('projection')" id="tabProj"
+                    class="px-6 py-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition">Projection
+                    & Goals</button>
+            </div>
+
+            <!-- MAIN DASHBOARD TAB -->
+            <div id="tabContentMain" class="space-y-6">
+                <!-- Filters -->
+                <div
+                    class="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-wrap gap-4 items-center justify-between">
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div class="flex items-center gap-2 text-slate-500 text-sm font-bold"><i data-feather="filter"
+                                class="w-4 h-4"></i> Filters:</div>
+                        <select id="filterYear"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold bg-slate-50"></select>
+                        <select id="filterServiceType"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                            <option value="all">All Services</option>
+                        </select>
+                        <select id="filterMonth"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- ... -->
+                            <option value="all">All Months (YTD)</option>
+                            <option value="Jan">Jan</option>
+                            <option value="Feb">Feb</option>
+                            <option value="Mar">Mar</option>
+                            <option value="Apr">Apr</option>
+                            <option value="May">May</option>
+                            <option value="Jun">Jun</option>
+                            <option value="Jul">Jul</option>
+                            <option value="Aug">Aug</option>
+                            <option value="Sep">Sep</option>
+                            <option value="Oct">Oct</option>
+                            <option value="Nov">Nov</option>
+                            <option value="Dec">Dec</option>
+                        </select>
+                        <select id="filterLane"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-emerald-700 bg-emerald-50 border-emerald-200">
+                            <option value="all">Lane (Dest/Origin)</option>
+                        </select>
+                        <select id="filterCommodity"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-purple-700 bg-purple-50 border-purple-200">
+                            <option value="all">Commodity</option>
+                        </select>
+                        <div class="w-px h-6 bg-slate-300 mx-2"></div>
+                        <select id="filterPrinciple"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Principles</option>
+                        </select>
+                        <select id="filterCustomer"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]">
+                            <option value="all">All Customers</option>
+                        </select>
+                    </div>
+
+                    <!-- SALES & FORECAST CONTROL -->
+                    <div class="flex items-center gap-4">
+                        <label
+                            class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition select-none">
+                            <div class="relative">
+                                <input type="checkbox" id="forecastToggle" class="sr-only"
+                                    onchange="toggleForecastMode()">
+                                <div class="w-10 h-5 bg-slate-300 rounded-full shadow-inner toggle-bg transition"></div>
+                                <div class="dot absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition">
+                                </div>
+                            </div>
+                            <span class="text-sm font-bold text-slate-600 toggle-label">Forecast: OFF</span>
+                        </label>
+                    </div>
                 </div>
 
-                <!-- SALES & FORECAST CONTROL -->
-                <div class="flex items-center gap-4">
-                    <label
-                        class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition select-none">
-                        <div class="relative">
-                            <input type="checkbox" id="forecastToggle" class="sr-only" onchange="toggleForecastMode()">
-                            <div class="w-10 h-5 bg-slate-300 rounded-full shadow-inner toggle-bg transition"></div>
-                            <div class="dot absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition">
+                <style>
+                    input:checked~.toggle-bg {
+                        background-color: #2563eb;
+                    }
+
+                    input:checked~.dot {
+                        transform: translateX(100%);
+                    }
+                </style>
+
+                <!-- KPIs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                    <div
+                        class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Revenue</div>
+                        <div class="text-base font-black text-slate-800 truncate" id="kpiRevenue">-</div>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">GP</div>
+                        <div class="text-base font-black text-slate-800 truncate" id="kpiGP">-</div>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Weight</div>
+                        <div class="text-base font-black text-slate-800 truncate" id="kpiWeight">-</div>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Dimension / CBM</div>
+                        <div class="text-base font-black text-slate-800 truncate" id="kpiDimension">-</div>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Pcs</div>
+                        <div class="text-base font-black text-slate-800 truncate" id="kpiPcs">-</div>
+                    </div>
+
+                    <!-- NEW TRADER CARD -->
+                    <div class="bg-gradient-to-br from-pink-50 to-white p-4 rounded-xl shadow-md border border-pink-100 cursor-pointer hover:bg-pink-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                        onclick="showNewTraderModal()">
+                        <div class="text-[10px] font-bold text-pink-600 uppercase flex items-center gap-1">New Traders
+                            <i data-feather="info" class="w-3 h-3"></i>
+                        </div>
+                        <div class="text-xl font-black text-pink-800" id="kpiNewTraders">-</div>
+                        <div class="text-[9px] text-pink-500 mt-1 leading-tight">>3mo Inactive</div>
+                    </div>
+                    <!-- REGULAR CARD -->
+                    <div class="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl shadow-md border border-green-100 cursor-pointer hover:bg-green-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                        onclick="showRegularCustomerModal()">
+                        <div class="text-[10px] font-bold text-green-600 uppercase flex items-center gap-1">Regular <i
+                                data-feather="check-circle" class="w-3 h-3"></i></div>
+                        <div class="text-xl font-black text-green-800" id="kpiRegularCustomers">-</div>
+                        <div class="text-[9px] text-green-500 mt-1 leading-tight">>3mo Active</div>
+                    </div>
+                    <!-- LOST CARD -->
+                    <div class="bg-gradient-to-br from-red-50 to-white p-4 rounded-xl shadow-md border border-red-100 cursor-pointer hover:bg-red-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
+                        onclick="showLostCustomerModal()">
+                        <div class="text-[10px] font-bold text-red-600 uppercase flex items-center gap-1">Lost Cust <i
+                                data-feather="alert-circle" class="w-3 h-3"></i></div>
+                        <div class="text-xl font-black text-red-800" id="kpiLostCustomers">-</div>
+                        <div class="text-[9px] text-red-500 mt-1 leading-tight">>3mo Zero</div>
+                    </div>
+                </div>
+
+                <!-- MONTHLY ANALYSIS -->
+                <div id="monthlyAnalysis" class="hidden mb-6"></div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-700">Customer Health Trend (Full Year)</h3>
+                        <div class="text-xs text-slate-400">Tracks New (Blue), Regular (Green), and Lost (Red)</div>
+                    </div>
+                    <div class="h-64"><canvas id="chartCustomerHealth"></canvas></div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-slate-700 text-sm mb-2">Revenue Trend</h3>
+                        <div class="h-48"><canvas id="chartRevenue"></canvas></div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-slate-700 text-sm mb-2">GP Trend</h3>
+                        <div class="h-48"><canvas id="chartGP"></canvas></div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-slate-700 text-sm mb-2">Weight Trend</h3>
+                        <div class="h-48"><canvas id="chartWeight"></canvas></div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-slate-700 text-sm mb-2">Pcs Trend</h3>
+                        <div class="h-48"><canvas id="chartPcs"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- MONTHLY PERFORMANCE TABLE -->
+                <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div
+                        class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between items-center bg-slate-50">
+                        <span>Monthly Performance Report v1.16</span>
+                        <span class="text-xs text-slate-400 font-normal">Budgets & Sales Names are auto-saved</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left sticky-header">
+                            <thead class="bg-blue-100 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-3 py-3 w-16">Month</th>
+                                    <th class="px-3 py-3 text-right">Revenue</th>
+                                    <th class="px-3 py-3 text-right">Diff (IDR)</th>
+                                    <th class="px-3 py-3 text-right">Growth %</th>
+                                    <th class="px-3 py-3 text-right bg-blue-50 w-32">Budget (IDR)</th>
+                                    <th class="px-3 py-3 text-right bg-blue-50 w-20">Achv %</th>
+                                    <th class="px-3 py-3 text-right">Act. Cust</th>
+                                    <th class="px-3 py-3 text-right">Diff</th>
+                                    <th class="px-3 py-3 text-right">Growth %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="performanceTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Top Customers -->
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200">
+                    <div class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between">
+                        <span>Top Customers</span>
+                        <span id="topCustSubtitle" class="text-sm font-normal text-slate-500"></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-500">
+                                <tr>
+                                    <th class="px-6 py-3">Customer</th>
+                                    <th class="px-6 py-3">Principle</th>
+                                    <th class="px-6 py-3 text-right">Revenue</th>
+                                    <th class="px-6 py-3 text-right">GP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topCustomerTable" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- PIPELINE SECTION -->
+                <div class="bg-white rounded-xl shadow-lg border border-blue-100 overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello"
+                                    class="w-4 h-4"></i></div>
+                            <div>
+                                <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
+                                <p class="text-xs text-slate-400">Monitor potential opportunities & traffic</p>
                             </div>
                         </div>
-                        <span class="text-sm font-bold text-slate-600 toggle-label">Forecast: OFF</span>
-                    </label>
-                </div>
-            </div>
-
-            <style>
-                input:checked~.toggle-bg {
-                    background-color: #2563eb;
-                }
-
-                input:checked~.dot {
-                    transform: translateX(100%);
-                }
-            </style>
-
-            <!-- KPIs -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                <div
-                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase">Revenue</div>
-                    <div class="text-base font-black text-slate-800 truncate" id="kpiRevenue">-</div>
-                </div>
-                <div
-                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase">GP</div>
-                    <div class="text-base font-black text-slate-800 truncate" id="kpiGP">-</div>
-                </div>
-                <div
-                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase">Weight</div>
-                    <div class="text-base font-black text-slate-800 truncate" id="kpiWeight">-</div>
-                </div>
-                <div
-                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase">Dimension / CBM</div>
-                    <div class="text-base font-black text-slate-800 truncate" id="kpiDimension">-</div>
-                </div>
-                <div
-                    class="bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl shadow-md border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition duration-300">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase">Pcs</div>
-                    <div class="text-base font-black text-slate-800 truncate" id="kpiPcs">-</div>
-                </div>
-
-                <!-- NEW TRADER CARD -->
-                <div class="bg-gradient-to-br from-pink-50 to-white p-4 rounded-xl shadow-md border border-pink-100 cursor-pointer hover:bg-pink-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
-                    onclick="showNewTraderModal()">
-                    <div class="text-[10px] font-bold text-pink-600 uppercase flex items-center gap-1">New Traders <i
-                            data-feather="info" class="w-3 h-3"></i></div>
-                    <div class="text-xl font-black text-pink-800" id="kpiNewTraders">-</div>
-                    <div class="text-[9px] text-pink-500 mt-1 leading-tight">>3mo Inactive</div>
-                </div>
-                <!-- REGULAR CARD -->
-                <div class="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl shadow-md border border-green-100 cursor-pointer hover:bg-green-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
-                    onclick="showRegularCustomerModal()">
-                    <div class="text-[10px] font-bold text-green-600 uppercase flex items-center gap-1">Regular <i
-                            data-feather="check-circle" class="w-3 h-3"></i></div>
-                    <div class="text-xl font-black text-green-800" id="kpiRegularCustomers">-</div>
-                    <div class="text-[9px] text-green-500 mt-1 leading-tight">>3mo Active</div>
-                </div>
-                <!-- LOST CARD -->
-                <div class="bg-gradient-to-br from-red-50 to-white p-4 rounded-xl shadow-md border border-red-100 cursor-pointer hover:bg-red-100 hover:-translate-y-1 hover:shadow-lg transition duration-300 relative group"
-                    onclick="showLostCustomerModal()">
-                    <div class="text-[10px] font-bold text-red-600 uppercase flex items-center gap-1">Lost Cust <i
-                            data-feather="alert-circle" class="w-3 h-3"></i></div>
-                    <div class="text-xl font-black text-red-800" id="kpiLostCustomers">-</div>
-                    <div class="text-[9px] text-red-500 mt-1 leading-tight">>3mo Zero</div>
-                </div>
-            </div>
-
-            <!-- MONTHLY ANALYSIS -->
-            <div id="monthlyAnalysis" class="hidden mb-6"></div>
-
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-slate-700">Customer Health Trend (Full Year)</h3>
-                    <div class="text-xs text-slate-400">Tracks New (Blue), Regular (Green), and Lost (Red)</div>
-                </div>
-                <div class="h-64"><canvas id="chartCustomerHealth"></canvas></div>
-            </div>
-
-            <!-- Charts Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
-                    <h3 class="font-bold text-slate-700 text-sm mb-2">Revenue Trend</h3>
-                    <div class="h-48"><canvas id="chartRevenue"></canvas></div>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
-                    <h3 class="font-bold text-slate-700 text-sm mb-2">GP Trend</h3>
-                    <div class="h-48"><canvas id="chartGP"></canvas></div>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
-                    <h3 class="font-bold text-slate-700 text-sm mb-2">Weight Trend</h3>
-                    <div class="h-48"><canvas id="chartWeight"></canvas></div>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
-                    <h3 class="font-bold text-slate-700 text-sm mb-2">Pcs Trend</h3>
-                    <div class="h-48"><canvas id="chartPcs"></canvas></div>
-                </div>
-            </div>
-
-            <!-- MONTHLY PERFORMANCE TABLE -->
-            <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
-                <div
-                    class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between items-center bg-slate-50">
-                    <span>Monthly Performance Report v1.2</span>
-                    <span class="text-xs text-slate-400 font-normal">Budgets & Sales Names are auto-saved</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left sticky-header">
-                        <thead class="bg-blue-100 text-slate-700 font-bold text-xs uppercase tracking-wider">
-                            <tr>
-                                <th class="px-3 py-3 w-16">Month</th>
-                                <th class="px-3 py-3 text-right">Revenue</th>
-                                <th class="px-3 py-3 text-right">Diff (IDR)</th>
-                                <th class="px-3 py-3 text-right">Growth %</th>
-                                <th class="px-3 py-3 text-right bg-blue-50 w-32">Budget (IDR)</th>
-                                <th class="px-3 py-3 text-right bg-blue-50 w-20">Achv %</th>
-                                <th class="px-3 py-3 text-right">Act. Cust</th>
-                                <th class="px-3 py-3 text-right">Diff</th>
-                                <th class="px-3 py-3 text-right">Growth %</th>
-                            </tr>
-                        </thead>
-                        <tbody id="performanceTableBody" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Top Customers -->
-            <div class="bg-white rounded-xl shadow-lg border border-slate-200">
-                <div class="px-6 py-4 border-b border-slate-100 font-bold flex justify-between">
-                    <span>Top Customers</span>
-                    <span id="topCustSubtitle" class="text-sm font-normal text-slate-500"></span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50 text-slate-500">
-                            <tr>
-                                <th class="px-6 py-3">Customer</th>
-                                <th class="px-6 py-3">Principle</th>
-                                <th class="px-6 py-3 text-right">Revenue</th>
-                                <th class="px-6 py-3 text-right">GP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="topCustomerTable" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- PIPELINE SECTION -->
-            <div class="bg-white rounded-xl shadow-lg border border-blue-100 overflow-hidden mt-6">
-                <div class="px-6 py-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
-                    <div class="flex items-center gap-2">
-                        <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello"
-                                class="w-4 h-4"></i></div>
-                        <div>
-                            <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
-                            <p class="text-xs text-slate-400">Monitor potential opportunities & traffic</p>
-                        </div>
+                        <button onclick="addPipelineRow()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
+                            <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
+                        </button>
                     </div>
-                    <button onclick="addPipelineRow()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
-                        <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
-                    </button>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 min-w-[150px]">Customer</th>
+                                    <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
+                                    <th class="px-4 py-3 w-40">Type</th>
+                                    <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
+                                    <th class="px-4 py-3 w-32">Est. Ready</th>
+                                    <th class="px-4 py-3 w-32">Status</th>
+                                    <th class="px-4 py-3 w-10 text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pipelineTableBody" class="divide-y divide-blue-50">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                            <tfoot class="bg-slate-50 border-t border-slate-100">
+                                <tr>
+                                    <td colspan="3"
+                                        class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
+                                        Total Potential:</td>
+                                    <td id="pipelineTotalRev" class="px-4 py-3 text-right font-bold text-blue-700">-
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
-                            <tr>
-                                <th class="px-4 py-3 min-w-[150px]">Customer</th>
-                                <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
-                                <th class="px-4 py-3 w-40">Type</th>
-                                <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
-                                <th class="px-4 py-3 w-32">Est. Ready</th>
-                                <th class="px-4 py-3 w-32">Status</th>
-                                <th class="px-4 py-3 w-10 text-center"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="pipelineTableBody" class="divide-y divide-blue-50">
-                            <!-- Rows injected by JS -->
-                        </tbody>
-                        <tfoot class="bg-slate-50 border-t border-slate-100">
-                            <tr>
-                                <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
-                                    Total Potential:</td>
-                                <td id="pipelineTotalRev" class="px-4 py-3 text-right font-bold text-blue-700">-</td>
-                                <td colspan="2"></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
 
-            <div id="debugInfo" class="text-xs text-slate-400 mt-4"></div>
+                <div id="debugInfo" class="text-xs text-slate-400 mt-4"></div>
 
-            <datalist id="customerListOptions"></datalist>
+                <datalist id="customerListOptions"></datalist>
 
-            <script>
-                // --- PIPELINE LOGIC ---
-                let pipelineData = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
+                <script>
+                    // --- PIPELINE LOGIC ---
+                    let pipelineData = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
 
-                function savePipeline() {
-                    localStorage.setItem('pipeline_sales_dashboard', JSON.stringify(pipelineData));
-                    renderPipeline();
-                    updateYearFilter();
-                    if (document.getElementById('forecastToggle') && document.getElementById('forecastToggle').checked) updateDashboard();
-                }
+                    function savePipeline() {
+                        localStorage.setItem('pipeline_sales_dashboard', JSON.stringify(pipelineData));
+                        renderPipeline();
+                        updateYearFilter();
+                        if (document.getElementById('forecastToggle') && document.getElementById('forecastToggle').checked) updateDashboard();
+                    }
 
-                function addPipelineRow() {
-                    pipelineData.push({
-                        id: Date.now(),
-                        customer: '',
-                        traffic: '',
-                        type: 'New Customer',
-                        rev: 0,
-                        ready: '',
-                        status: 'Profiling'
-                    });
-                    savePipeline();
-                }
-
-                function deletePipelineRow(id) {
-                    if (confirm('Remove this opportunity?')) {
-                        pipelineData = pipelineData.filter(i => i.id !== id);
+                    function addPipelineRow() {
+                        pipelineData.push({
+                            id: Date.now(),
+                            customer: '',
+                            traffic: '',
+                            type: 'New Customer',
+                            rev: 0,
+                            ready: '',
+                            status: 'Profiling'
+                        });
                         savePipeline();
                     }
-                }
 
-                function updatePipeline(id, field, val) {
-                    const row = pipelineData.find(i => i.id === id);
-                    if (row) {
-                        row[field] = (field === 'rev') ? parseFloat(val) || 0 : val;
-                        savePipeline();
+                    function deletePipelineRow(id) {
+                        if (confirm('Remove this opportunity?')) {
+                            pipelineData = pipelineData.filter(i => i.id !== id);
+                            savePipeline();
+                        }
                     }
-                }
 
-                function renderPipeline() {
-                    const tbody = document.getElementById('pipelineTableBody');
-                    if (!tbody) return;
+                    function updatePipeline(id, field, val) {
+                        const row = pipelineData.find(i => i.id === id);
+                        if (row) {
+                            row[field] = (field === 'rev') ? parseFloat(val) || 0 : val;
+                            savePipeline();
+                        }
+                    }
 
-                    let total = 0;
-                    tbody.innerHTML = pipelineData.map(item => {
-                        total += (item.rev || 0);
-                        return `
+                    function renderPipeline() {
+                        const tbody = document.getElementById('pipelineTableBody');
+                        if (!tbody) return;
+
+                        let total = 0;
+                        tbody.innerHTML = pipelineData.map(item => {
+                            total += (item.rev || 0);
+                            return `
                         <tr class="hover:bg-blue-50/20 transition group">
                             <td class="px-2 py-2">
                                 <input type="text" list="customerListOptions" 
@@ -528,46 +550,201 @@
                             </td>
                         </tr>
                         `;
-                    }).join('');
+                        }).join('');
 
-                    document.getElementById('pipelineTotalRev').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
-                    feather.replace();
-                }
+                        document.getElementById('pipelineTotalRev').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
+                        feather.replace();
+                    }
 
-                // Initial Render (Safe check)
-                document.addEventListener('DOMContentLoaded', () => {
-                    cleanPipelineData(); // Fix bad dates on load
-                    setTimeout(renderPipeline, 500);
-                });
+                    // Initial Render (Safe check)
+                    document.addEventListener('DOMContentLoaded', () => {
+                        cleanPipelineData(); // Fix bad dates on load
+                        setTimeout(renderPipeline, 500);
+                    });
 
-                function cleanPipelineData() {
-                    let changed = false;
-                    pipelineData.forEach(p => {
-                        if (!p.ready) return;
-                        const d = new Date(p.ready);
-                        if (isNaN(d.getTime())) {
-                            p.ready = new Date().toISOString().split('T')[0];
-                            changed = true;
-                        } else {
-                            const y = d.getFullYear();
-                            // Fix: Year 18985 or other garbage
-                            if (y < 2000 || y > 2040) {
+                    function cleanPipelineData() {
+                        let changed = false;
+                        pipelineData.forEach(p => {
+                            if (!p.ready) return;
+                            const d = new Date(p.ready);
+                            if (isNaN(d.getTime())) {
                                 p.ready = new Date().toISOString().split('T')[0];
                                 changed = true;
+                            } else {
+                                const y = d.getFullYear();
+                                // Fix: Year 18985 or other garbage
+                                if (y < 2000 || y > 2040) {
+                                    p.ready = new Date().toISOString().split('T')[0];
+                                    changed = true;
+                                }
+                                // Fix: Invalid JS Format passed to input (e.g. "12/12/2024" isn't yyyy-MM-dd)
+                                if (!/^\d{4}-\d{2}-\d{2}$/.test(p.ready)) {
+                                    p.ready = d.toISOString().split('T')[0];
+                                    changed = true;
+                                }
                             }
-                            // Fix: Invalid JS Format passed to input (e.g. "12/12/2024" isn't yyyy-MM-dd)
-                            if (!/^\d{4}-\d{2}-\d{2}$/.test(p.ready)) {
-                                p.ready = d.toISOString().split('T')[0];
-                                changed = true;
-                            }
+                        });
+                        if (changed) {
+                            console.log("Sanitized Pipeline Data (invalid dates fixed)");
+                            savePipeline();
                         }
-                    });
-                    if (changed) {
-                        console.log("Sanitized Pipeline Data (invalid dates fixed)");
-                        savePipeline();
                     }
-                }
-            </script>
+                </script>
+
+            </div> <!-- End tabContentMain -->
+
+            <!-- PROJECTION & GOALS TAB -->
+            <div id="tabContentProjection" class="hidden space-y-6">
+                <!-- SELECTION NOTICE -->
+                <div id="projectionSelectionNotice"
+                    class="hidden p-12 text-center text-slate-400 italic font-bold bg-white rounded-xl shadow-lg border border-slate-100">
+                    PILIH BULAN SPESIFIK UNTUK MELIHAT PROYEKSI TARGET
+                </div>
+
+                <!-- PROJECTION CONTENT -->
+                <div id="projectionMainContent" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Input Card -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-blue-100 space-y-4">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i data-feather="edit-3" class="w-4 h-4 text-blue-600"></i>
+                                Targets & Reports [<span class="selected-month-year text-blue-600"></span>]
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Target Rev
+                                            (IDR)</label>
+                                        <input type="number" id="inpTargetRev"
+                                            class="w-full border rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                            placeholder="Target...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Target GP
+                                            (IDR)</label>
+                                        <input type="number" id="inpTargetGP"
+                                            class="w-full border rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                            placeholder="Target...">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase">Total Effective
+                                        Days</label>
+                                    <input type="number" id="inpTotalDays"
+                                        class="w-full border rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                        placeholder="e.g. 22">
+                                </div>
+                                <hr class="border-slate-100">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">User Rev
+                                            (Report)</label>
+                                        <input type="number" id="inpUserRev"
+                                            class="w-full border border-blue-100 bg-blue-50/30 rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                            placeholder="Optional...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">User GP
+                                            (Report)</label>
+                                        <input type="number" id="inpUserGP"
+                                            class="w-full border border-blue-100 bg-blue-50/30 rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                            placeholder="Optional...">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-emerald-600 uppercase italic">Current
+                                        Day (Manual Fill)</label>
+                                    <input type="number" id="inpCurrentDay"
+                                        class="w-full border border-emerald-200 bg-emerald-50/30 rounded-lg px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-sm"
+                                        placeholder="Isi hari ke berapa saat ini...">
+                                </div>
+                                <button onclick="saveTargets()"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow-md mt-2">
+                                    Update Metrics
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Daily Pulse -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-emerald-100 space-y-4">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i data-feather="activity" class="w-4 h-4 text-emerald-600"></i>
+                                Daily Performance (ADNR)
+                            </h3>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                    <div class="text-[10px] font-bold text-emerald-600 uppercase">Status Day</div>
+                                    <div class="text-2xl font-black text-emerald-800" id="dispCurrentDayLabel">-</div>
+                                    <div class="text-[9px] text-emerald-500" id="dispDaysLeft">0 Days Left</div>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-500 uppercase text-xs">ADNR Revenue
+                                    </div>
+                                    <div class="text-xl font-black text-slate-800 truncate" id="dispAdnrRev">-</div>
+                                    <div class="text-[10px] font-bold text-slate-400 mt-1" id="dispMomRevPct">- vs Prev
+                                        Month</div>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-500 uppercase text-xs">ADNR GP</div>
+                                    <div class="text-xl font-black text-slate-800 truncate" id="dispAdnrGP">-</div>
+                                    <div class="text-[10px] font-bold text-slate-400 mt-1" id="dispMomGPPct">- vs Prev
+                                        Month</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- End-of-Month Forecast -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-purple-100 space-y-4">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i data-feather="trending-up" class="w-4 h-4 text-purple-600"></i>
+                                EOM Projection
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                                    <div class="text-[10px] font-bold text-purple-600 uppercase">Projected Revenue</div>
+                                    <div class="text-2xl font-black text-purple-800" id="dispProjRev">-</div>
+                                    <div class="text-[10px] font-bold text-purple-500" id="dispProjRevPct">-</div>
+                                </div>
+                                <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                    <div class="text-[10px] font-bold text-indigo-600 uppercase">Projected GP</div>
+                                    <div class="text-2xl font-black text-indigo-800" id="dispProjGP">-</div>
+                                    <div class="text-[10px] font-bold text-indigo-500" id="dispProjGPPct">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gap Analysis Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <i data-feather="target" class="w-4 h-4 text-pink-600"></i>
+                            Gap to Goal (GTG) Analysis
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4 border border-slate-100 rounded-xl bg-slate-50">
+                                <div class="text-xs font-bold text-slate-400 uppercase">Revenue Gap</div>
+                                <div class="text-3xl font-black text-slate-700 mt-1" id="dispGtgRev">-</div>
+                                <div class="text-sm font-bold text-pink-600 mt-1" id="dispGtgRevPct">-</div>
+                            </div>
+                            <div class="p-4 border border-slate-100 rounded-xl bg-slate-50">
+                                <div class="text-xs font-bold text-slate-400 uppercase">GP Gap</div>
+                                <div class="text-3xl font-black text-slate-700 mt-1" id="dispGtgGP">-</div>
+                                <div class="text-sm font-bold text-pink-600 mt-1" id="dispGtgGPPct">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start gap-4">
+                        <i data-feather="info" class="w-5 h-5 text-blue-600 mt-1"></i>
+                        <div class="text-xs text-blue-800 leading-relaxed">
+                            <strong>Note:</strong> Proyeksi dihitung berdasarkan <strong>ADNR</strong> (Average Day Net
+                            Revenue) saat ini dikalikan sisa hari kerja/efektif.
+                            Data target dan hari efektif akan tersimpan otomatis di browser Anda untuk setiap bulan yang
+                            dipilih.
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End tabContentProjection -->
 
             <!-- Footer -->
             <footer class="mt-12 border-t border-slate-200 py-6 text-center">
@@ -750,7 +927,7 @@
                             }
 
                             // Save to Local Storage for offline use
-                            saveDataToStorage(window.rawSheetData || []); // rawSheetData might not be fully available but processRawData would be
+                            saveDataToStorage(window.rawSheetData || []);
 
                             // Re-init UI
                             if (allData.length > 0) {
@@ -762,7 +939,6 @@
                                 initFilters();
                                 updateDashboard();
                                 renderPipeline();
-                                console.log("✅ Data berhasil ditarik dari Cloud!");
                             }
                         }
                     } catch (err) {
@@ -772,6 +948,179 @@
                         feather.replace();
                     }
                 }
+
+                // --- GLOBAL TAB & PROJECTION LOGIC ---
+                function switchTab(tab) {
+                    const isMain = tab === 'main';
+                    const elMain = document.getElementById('tabContentMain');
+                    const elProj = document.getElementById('tabContentProjection');
+
+                    if (elMain) elMain.classList.toggle('hidden', !isMain);
+                    if (elProj) elProj.classList.toggle('hidden', isMain);
+
+                    const tabMain = document.getElementById('tabMain');
+                    const tabProj = document.getElementById('tabProj');
+
+                    if (isMain) {
+                        tabMain.classList.add('border-blue-600', 'text-blue-600');
+                        tabMain.classList.remove('border-transparent', 'text-slate-400');
+                        tabProj.classList.remove('border-blue-600', 'text-blue-600');
+                        tabProj.classList.add('border-transparent', 'text-slate-400');
+                    } else {
+                        tabProj.classList.add('border-blue-600', 'text-blue-600');
+                        tabProj.classList.remove('border-transparent', 'text-slate-400');
+                        tabMain.classList.remove('border-blue-600', 'text-blue-600');
+                        tabMain.classList.add('border-transparent', 'text-slate-400');
+                        updateProjectionLayer();
+                    }
+                }
+
+                function updateProjectionLayer() {
+                    const yr = filterYear.value;
+                    const mo = filterMonth.value;
+                    const elProj = document.getElementById('tabContentProjection');
+                    const elNotice = document.getElementById('projectionSelectionNotice');
+                    const elContent = document.getElementById('projectionMainContent');
+
+                    if (!elProj || !elNotice || !elContent) return;
+
+                    if (mo === 'all') {
+                        elNotice.classList.remove('hidden');
+                        elContent.classList.add('hidden');
+                        return;
+                    } else {
+                        elNotice.classList.add('hidden');
+                        elContent.classList.remove('hidden');
+                    }
+
+                    // Restore inputs or build labels
+                    document.querySelectorAll('.selected-month-year').forEach(el => el.innerText = `${mo} ${yr}`);
+
+                    const storeKeyRev = `target_rev_${yr}_${mo}`;
+                    const storeKeyGP = `target_gp_${yr}_${mo}`;
+                    const storeKeyDays = `target_days_${yr}_${mo}`;
+                    const storeKeyUserRev = `user_rev_${yr}_${mo}`;
+                    const storeKeyUserGP = `user_gp_${yr}_${mo}`;
+                    const storeKeyCurDay = `cur_day_manual_${yr}_${mo}`;
+
+                    const tRev = parseFloat(localStorage.getItem(storeKeyRev)) || 0;
+                    const tGP = parseFloat(localStorage.getItem(storeKeyGP)) || 0;
+                    const eDays = parseInt(localStorage.getItem(storeKeyDays)) || 0;
+                    const uRev = localStorage.getItem(storeKeyUserRev) || "";
+                    const uGP = localStorage.getItem(storeKeyUserGP) || "";
+                    const cDay = localStorage.getItem(storeKeyCurDay) || "";
+
+                    if (document.getElementById('inpTargetRev')) document.getElementById('inpTargetRev').value = tRev || "";
+                    if (document.getElementById('inpTargetGP')) document.getElementById('inpTargetGP').value = tGP || "";
+                    if (document.getElementById('inpTotalDays')) document.getElementById('inpTotalDays').value = eDays || "";
+                    if (document.getElementById('inpUserRev')) document.getElementById('inpUserRev').value = uRev;
+                    if (document.getElementById('inpUserGP')) document.getElementById('inpUserGP').value = uGP;
+                    if (document.getElementById('inpCurrentDay')) document.getElementById('inpCurrentDay').value = cDay;
+
+                    // CALCULATE DATA CURRENT & PREVIOUS
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    let curRev = 0, curGP = 0;
+                    let prevRev = 0, prevGP = 0;
+
+                    const mIdx = months.indexOf(mo);
+                    let prevYr = yr;
+                    let prevMo = "";
+                    if (mIdx === 0) {
+                        prevYr = (parseInt(yr) - 1).toString();
+                        prevMo = "Dec";
+                    } else {
+                        prevMo = months[mIdx - 1];
+                    }
+
+                    allData.forEach(row => {
+                        if (row.year == yr) {
+                            row.monthlyData.forEach(m => { if (m.month == mo) { curRev += m.revenue; curGP += m.gp; } });
+                        }
+                        if (row.year == prevYr) {
+                            row.monthlyData.forEach(m => { if (m.month == prevMo) { prevRev += m.revenue; prevGP += m.gp; } });
+                        }
+                    });
+
+                    // DETERMINE CURRENT DATA (Manual Report Override)
+                    let baseRev = curRev;
+                    let baseGP = curGP;
+                    if (uRev !== "") baseRev = parseFloat(uRev);
+                    if (uGP !== "") baseGP = parseFloat(uGP);
+
+                    // DETERMINE CURRENT DAY (User filled)
+                    let curDay = parseInt(cDay) || 0;
+
+                    const momRevPct = prevRev > 0 ? (baseRev / prevRev) : 0;
+                    const momGPPct = prevGP > 0 ? (baseGP / prevGP) : 0;
+
+                    const f = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+                    const p = (n) => new Intl.NumberFormat('id-ID', { style: 'percent', maximumFractionDigits: 1 }).format(n);
+
+                    // If CurDay is 0 (not filled), we can't do projection
+                    if (curDay <= 0) {
+                        document.getElementById('dispCurrentDayLabel').innerText = "-";
+                        document.getElementById('dispDaysLeft').innerText = "Isi 'Current Day' untuk kalkulasi";
+                        ['dispAdnrRev', 'dispAdnrGP', 'dispProjRev', 'dispProjRevPct', 'dispProjGP', 'dispProjGPPct', 'dispGtgRev', 'dispGtgRevPct', 'dispGtgGP', 'dispGtgGPPct', 'dispMomRevPct', 'dispMomGPPct'].forEach(id => {
+                            const el = document.getElementById(id); if (el) el.innerText = "-";
+                        });
+                        return;
+                    }
+
+                    const dayLeft = Math.max(0, eDays - curDay);
+                    const adnrRev = baseRev / curDay;
+                    const adnrGP = baseGP / curDay;
+
+                    const gtgRev = Math.max(0, tRev - baseRev);
+                    const gtgGP = Math.max(0, tGP - baseGP);
+
+                    const projRev = baseRev + (adnrRev * dayLeft);
+                    const projGP = baseGP + (adnrGP * dayLeft);
+
+                    const achvRev = tRev > 0 ? (baseRev / tRev) : 0;
+                    const achvGP = tGP > 0 ? (baseGP / tGP) : 0;
+                    const pAchvRev = tRev > 0 ? (projRev / tRev) : 0;
+                    const pAchvGP = tGP > 0 ? (projGP / tGP) : 0;
+
+                    document.getElementById('dispCurrentDayLabel').innerText = curDay;
+                    const elAdnrRev = document.getElementById('dispAdnrRev'); if (elAdnrRev) elAdnrRev.innerText = f(adnrRev);
+                    const elAdnrGP = document.getElementById('dispAdnrGP'); if (elAdnrGP) elAdnrGP.innerText = f(adnrGP);
+                    const elDaysLeft = document.getElementById('dispDaysLeft'); if (elDaysLeft) elDaysLeft.innerText = `${dayLeft} Days Left`;
+
+                    const elMomRev = document.getElementById('dispMomRevPct');
+                    if (elMomRev) {
+                        elMomRev.innerText = `${p(momRevPct)} vs Last Month`;
+                        elMomRev.className = `text-[10px] font-bold mt-1 ${momRevPct >= 1 ? 'text-green-600' : 'text-slate-400'}`;
+                    }
+                    const elMomGP = document.getElementById('dispMomGPPct');
+                    if (elMomGP) {
+                        elMomGP.innerText = `${p(momGPPct)} vs Last Month`;
+                        elMomGP.className = `text-[10px] font-bold mt-1 ${momGPPct >= 1 ? 'text-green-600' : 'text-slate-400'}`;
+                    }
+
+                    const elGtgRev = document.getElementById('dispGtgRev'); if (elGtgRev) elGtgRev.innerText = f(gtgRev);
+                    const elGtgRevPct = document.getElementById('dispGtgRevPct'); if (elGtgRevPct) elGtgRevPct.innerText = `${p(achvRev)} Achievement so far`;
+                    const elGtgGP = document.getElementById('dispGtgGP'); if (elGtgGP) elGtgGP.innerText = f(gtgGP);
+                    const elGtgGPPct = document.getElementById('dispGtgGPPct'); if (elGtgGPPct) elGtgGPPct.innerText = `${p(achvGP)} Achievement so far`;
+
+                    const elProjRev = document.getElementById('dispProjRev'); if (elProjRev) elProjRev.innerText = f(projRev);
+                    const elProjRevPct = document.getElementById('dispProjRevPct'); if (elProjRevPct) elProjRevPct.innerText = `${p(pAchvRev)} Estimated Full-Month`;
+                    const elProjGP = document.getElementById('dispProjGP'); if (elProjGP) elProjGP.innerText = f(projGP);
+                    const elProjGPPct = document.getElementById('dispProjGPPct'); if (elProjGPPct) elProjGPPct.innerText = `${p(pAchvGP)} Estimated Full-Month`;
+
+                    feather.replace();
+                }
+
+                window.saveTargets = function () {
+                    const yr = filterYear.value;
+                    const mo = filterMonth.value;
+                    localStorage.setItem(`target_rev_${yr}_${mo}`, document.getElementById('inpTargetRev').value);
+                    localStorage.setItem(`target_gp_${yr}_${mo}`, document.getElementById('inpTargetGP').value);
+                    localStorage.setItem(`target_days_${yr}_${mo}`, document.getElementById('inpTotalDays').value);
+                    localStorage.setItem(`user_rev_${yr}_${mo}`, document.getElementById('inpUserRev').value);
+                    localStorage.setItem(`user_gp_${yr}_${mo}`, document.getElementById('inpUserGP').value);
+                    localStorage.setItem(`cur_day_manual_${yr}_${mo}`, document.getElementById('inpCurrentDay').value);
+                    updateProjectionLayer();
+                };
 
                 function saveDataToStorage(raw) {
                     try {
@@ -1044,130 +1393,130 @@
         }
 
         function processRawData(rows) {
-            // Hardcoded Structure for "Rev Rifai"
-            // Row 3 (Index 3): Month Headers. Expecting multiple years (Jan...Dec, Jan...Dec)
-            // Row 4 (Index 4): Metrics (Pcs, Weight, Rev, GP...)
-            // Col 4 (Index 4): Customer Name
+            // 0. DYNAMIC ROW DETECTION
+            let headerRowIndex = 3, metricsRowIndex = 4, yearRowIndex = 2;
+            for (let i = 0; i < Math.min(20, rows.length); i++) {
+                const rStr = JSON.stringify(rows[i] || []).toLowerCase();
+                if (rStr.includes("customer") && rStr.includes("principle")) headerRowIndex = i;
+                if (rStr.includes("rev") && rStr.includes("pcs")) metricsRowIndex = i;
+            }
+            if (headerRowIndex > 0) yearRowIndex = headerRowIndex - 1;
 
-            const headerRowIdx = 3;
-            const yearRowIdx = 2; // Row containing 2024, 2025 labels
-            if (rows.length < 5) return [];
+            const headerRowIdx = headerRowIndex;
+            if (rows.length <= metricsRowIndex) return [];
 
-            // 1. Identify Year Labels in Row 2
+            // 1. Identify Year Labels in Row (headerRowIdx - 1)
             const detectedYears = [];
-            (rows[yearRowIdx] || []).forEach((cell, idx) => {
+            (rows[yearRowIndex] || []).forEach((cell, idx) => {
                 const val = (cell || "").toString().trim();
-                // Match 4 digits starting with 20
-                if (/^20\d{2}$/.test(val)) {
-                    detectedYears.push({ year: val, colIdx: idx });
+                // Match 4 digits starting with 20 anywhere in the string
+                if (/\b(202[4-9]|203[0-9])\b/.test(val)) {
+                    const match = val.match(/\b(202[4-9]|203[0-9])\b/);
+                    detectedYears.push({ year: match[1], colIdx: idx });
                 }
             });
 
-            // 2. Identify Month Blocks in Row 3
+            // 2. Identify Month Columns
             const monthsListLong = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-            const yearBlocks = [];
+            const aliases = { "januari": "jan", "january": "jan", "pebruari": "feb", "februari": "feb", "february": "feb", "maret": "mar", "march": "mar", "april": "apr", "mei": "may", "juni": "jun", "june": "jun", "juli": "jul", "july": "jul", "agustus": "aug", "august": "aug", "september": "sep", "oktober": "oct", "october": "oct", "nopember": "nov", "november": "nov", "desember": "dec", "december": "dec" };
 
+            const foundMonths = [];
             (rows[headerRowIdx] || []).forEach((cell, idx) => {
-                const val = (cell || "").toString().toLowerCase().trim();
-                // Find ANY month to start a block, though Jan is standard
+                let val = (cell || "").toString().toLowerCase().trim();
+                if (aliases[val]) val = aliases[val];
                 if (monthsListLong.includes(val)) {
-                    // Check if this is a new block or just a continuation
-                    // Usually we look for 'Jan' to demarcate a new YEAR block
-                    if (val !== 'jan' && yearBlocks.length > 0) return;
-
-                    const foundMonthIdx = monthsListLong.indexOf(val);
-                    let offsetRev = 2; let offsetGP = 3; let offsetWgt = 1; let offsetPcs = 0; let offsetDim = 4;
-
-                    // Scan next 8 columns in Metric Row
-                    const metricRow = rows[headerRowIdx + 1] || [];
-                    for (let k = 0; k < 8; k++) {
-                        const mVal = (metricRow[idx + k] || "").toString().toLowerCase().trim();
-                        if (mVal.includes("rev")) offsetRev = k;
-                        else if (mVal.includes("gp") || mVal.includes("gross")) offsetGP = k;
-                        else if (mVal.includes("weight") || mVal.includes("wgt")) offsetWgt = k;
-                        else if (mVal.includes("pcs")) offsetPcs = k;
-                        else if (mVal.includes("dim") || mVal.includes("vol") || mVal.includes("cbm")) offsetDim = k;
-                    }
-
-                    // Strategy: Find absolute column index for each month (Jan-Dec) instead of using Stride
-                    const headerRow = rows[headerRowIdx] || [];
-                    const absoluteMonths = {}; // e.g. { 0: col_idx_for_jan, 1: col_idx_for_feb }
-                    
-                    for (let m = 0; m < 12; m++) {
-                        const targetMonth = monthsListLong[m];
-                        // start searching from the year's start col, up to a reasonable limit (e.g. +60 cols)
-                        for (let k = idx; k < Math.min(headerRow.length, idx + 60); k++) {
-                            const hv = (headerRow[k] || "").toString().toLowerCase().trim();
-                            if (hv === targetMonth) {
-                                absoluteMonths[m] = k;
-                                break;
-                            }
-                        }
-                    }
-
-                    yearBlocks.push({
-                        startCol: idx,
-                        startMonthIdx: foundMonthIdx, // although we mapped absolutely, this indicates first month
-                        absoluteMonths: absoluteMonths,
-                        fallBackStride: 4, // Just in case a month header is totally missing
-                        offsets: { rev: offsetRev, gp: offsetGP, wgt: offsetWgt, pcs: offsetPcs, dim: offsetDim }
-                    });
+                    foundMonths.push({ month: val, colIdx: idx });
                 }
             });
 
-            // 3. Map Years to Blocks
+            // 3. Create Year Blocks
+            const yearBlocks = [];
             if (detectedYears.length > 0) {
                 detectedYears.sort((a, b) => a.colIdx - b.colIdx);
-                yearBlocks.sort((a, b) => a.startCol - b.startCol);
+                detectedYears.forEach((yLabel, yIdx) => {
+                    const nextYLabelCol = detectedYears[yIdx + 1] ? detectedYears[yIdx + 1].colIdx : 9999;
+                    const blockMonths = foundMonths.filter(m => m.colIdx >= yLabel.colIdx && m.colIdx < nextYLabelCol);
+                    if (blockMonths.length > 0) {
+                        const absoluteMonths = {};
+                        blockMonths.forEach(m => {
+                            const mIdx = monthsListLong.indexOf(m.month);
+                            absoluteMonths[mIdx] = m.colIdx;
+                        });
+                        const firstMonthCol = blockMonths[0].colIdx;
+                        const firstMonthName = blockMonths[0].month;
 
-                yearBlocks.forEach((block, i) => {
-                    if (detectedYears[i]) {
-                        block.year = detectedYears[i].year;
-                    } else {
-                        const lastYearVal = parseInt(detectedYears[detectedYears.length - 1].year);
-                        block.year = (lastYearVal + (i - (detectedYears.length - 1))).toString();
+                        let offsetRev = 2, offsetGP = 3, offsetWgt = 1, offsetPcs = 0, offsetDim = 4;
+                        const metricRow = rows[metricsRowIndex] || [];
+                        for (let k = 0; k < 8; k++) {
+                            const mVal = (metricRow[firstMonthCol + k] || "").toString().toLowerCase().trim();
+                            if (mVal.includes("rev")) offsetRev = k;
+                            else if (mVal.includes("gp") || mVal.includes("gross")) offsetGP = k;
+                            else if (mVal.includes("weight") || mVal.includes("wgt")) offsetWgt = k;
+                            else if (mVal.includes("pcs")) offsetPcs = k;
+                            else if (mVal.includes("dim") || mVal.includes("vol")) offsetDim = k;
+                        }
+                        yearBlocks.push({
+                            year: yLabel.year,
+                            startCol: firstMonthCol,
+                            startMonthIdx: monthsListLong.indexOf(firstMonthName),
+                            absoluteMonths: absoluteMonths,
+                            fallBackStride: 4,
+                            offsets: { rev: offsetRev, gp: offsetGP, wgt: offsetWgt, pcs: offsetPcs, dim: offsetDim }
+                        });
                     }
                 });
-            } else {
-                const startYear = 2024;
-                yearBlocks.forEach((b, i) => {
-                    b.year = (startYear + i).toString();
+            }
+            if (yearBlocks.length === 0 && foundMonths.length > 0) {
+                let currentYear = 2024;
+                let currentAbsMonths = {};
+                let lastMIdx = -1;
+                foundMonths.forEach((m, i) => {
+                    const mIdx = monthsListLong.indexOf(m.month);
+                    if (mIdx <= lastMIdx && Object.keys(currentAbsMonths).length > 0) {
+                        const firstMName = foundMonths[i - Object.keys(currentAbsMonths).length].month;
+                        yearBlocks.push({ year: currentYear.toString(), absoluteMonths: currentAbsMonths, startCol: Object.values(currentAbsMonths)[0], startMonthIdx: monthsListLong.indexOf(firstMName), fallBackStride: 4, offsets: { rev: 2, gp: 3, wgt: 1, pcs: 0, dim: 4 } });
+                        currentYear++;
+                        currentAbsMonths = {};
+                    }
+                    currentAbsMonths[mIdx] = m.colIdx;
+                    lastMIdx = mIdx;
                 });
+                if (Object.keys(currentAbsMonths).length > 0) {
+                    const firstMName = foundMonths[foundMonths.length - Object.keys(currentAbsMonths).length].month;
+                    yearBlocks.push({ year: currentYear.toString(), absoluteMonths: currentAbsMonths, startCol: Object.values(currentAbsMonths)[0], startMonthIdx: monthsListLong.indexOf(firstMName), fallBackStride: 4, offsets: { rev: 2, gp: 3, wgt: 1, pcs: 0, dim: 4 } });
+                }
             }
 
-            const cleanData = [];
+            // 4. Identify Customer & Principle Columns
+            let colCust = 4, colPrinc = 1, colServ = 2;
+            const headerRow = rows[headerRowIdx] || [];
+            headerRow.forEach((cell, idx) => {
+                const v = (cell || "").toString().toLowerCase().trim();
+                if (v.includes("customer") || v.includes("client") || v.includes("nama") || v.includes("perusahaan")) colCust = idx;
+                if (v.includes("principle") || v.includes("principal") || v.includes("shipper")) colPrinc = idx;
+                if (v.includes("service") || v.includes("type") || v.includes("moda")) colServ = idx;
+            });
 
-            // 4. Parse Data Rows
-            for (let i = 5; i < rows.length; i++) {
+            const cleanData = [];
+            for (let i = metricsRowIndex + 1; i < rows.length; i++) {
                 const r = rows[i];
                 if (!r || r.length < 5) continue;
 
-                // AGGRESSIVE FILTER: Exclude "Total" rows
                 let isTotalRow = false;
-                for (let k = 0; k < Math.min(r.length, 12); k++) {
-                    const cellVal = (r[k] || "").toString().toLowerCase();
-                    if (cellVal === "total" || cellVal.includes("grand total") || cellVal.includes("jumlah") || cellVal.includes("summary")) {
-                        isTotalRow = true;
-                        break;
-                    }
-                }
-                if ((r[4] || "").toString().toLowerCase().includes("total")) isTotalRow = true;
+                const searchStr = JSON.stringify(r).toLowerCase();
+                if (searchStr.includes("total") || searchStr.includes("jumlah") || searchStr.includes("summary")) isTotalRow = true;
                 if (isTotalRow) continue;
 
-                // Customer Name
-                let rawCust = (r[4] || "").toString().trim();
+                let rawCust = (r[colCust] || "").toString().trim();
                 if (!rawCust || rawCust.length < 2) continue;
 
-                let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim();
-                cleanCust = cleanCust.replace(/\s+/g, ' ');
+                let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim().replace(/\s+/g, ' ');
+                const princ = (r[colPrinc] || "General").toString().toUpperCase().trim();
+                const serv = (r[colServ] || "Unknown").toString().toUpperCase().trim();
 
-                // Process each year block
                 yearBlocks.forEach(block => {
-                    if (!block.year) return;
-
                     const monthlyData = [];
                     const offsets = block.offsets;
-
                     const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
                     monthsList.forEach((mName, mIdx) => {
@@ -1175,31 +1524,33 @@
                         if (block.absoluteMonths[mIdx] !== undefined) {
                             monthStartCol = block.absoluteMonths[mIdx];
                         } else {
-                            // Fallback if header was missing, guess based on stride from first found month
                             monthStartCol = block.startCol + ((mIdx - block.startMonthIdx) * block.fallBackStride);
                         }
-
                         if (monthStartCol >= r.length) return;
 
-                        // Scan local metric row underneath this month to find accurate offset specifically for this month!
-                        // This handles asymmetrical columns per month (e.g. Jan has 3 cols, Feb has 4 config)
                         let locRev = offsets.rev, locGp = offsets.gp, locWgt = offsets.wgt, locPcs = offsets.pcs, locDim = offsets.dim;
-                        
-                        const metricRow = rows[Math.min(headerRowIdx + 1, rows.length - 1)] || [];
-                        for(let k=0; k < 6; k++) {
+                        const metricRow = rows[metricsRowIndex] || [];
+                        const nextMIdx = (mIdx + 1) % 12;
+                        const nextMonthCol = block.absoluteMonths[nextMIdx] || (monthStartCol + block.fallBackStride);
+                        const searchLimit = Math.min(6, Math.max(1, nextMonthCol - monthStartCol));
+
+                        for (let k = 0; k < searchLimit; k++) {
                             const mv = (metricRow[monthStartCol + k] || "").toString().toLowerCase().trim();
-                            if(mv.includes("rev")) locRev = k;
-                            else if(mv.includes("gp") || mv.includes("gross")) locGp = k;
-                            else if(mv.includes("weight") || mv.includes("wgt")) locWgt = k;
-                            else if(mv.includes("pcs")) locPcs = k;
-                            else if(mv.includes("dim") || mv.includes("vol") || mv.includes("cbm")) locDim = k;
+                            if (mv.includes("rev")) locRev = k;
+                            else if (mv.includes("gp") || mv.includes("gross")) locGp = k;
+                            else if (mv.includes("weight") || mv.includes("wgt")) locWgt = k;
+                            else if (mv.includes("pcs")) locPcs = k;
+                            else if (mv.includes("dim") || mv.includes("vol") || mv.includes("cbm")) locDim = k;
                         }
 
                         const getVal = (offset) => {
                             const valIdx = monthStartCol + offset;
-                            return cleanNum(r[valIdx]);
+                            const val = r[valIdx];
+                            if (block.year == "2026" && (mName == "Jan" || mName == "Feb") && i < metricsRowIndex + 5) {
+                                console.log(`DEBUG [Row ${i}] ${block.year} ${mName}: col=${valIdx} raw="${val}" clean=${cleanNum(val)} offsetIdx=${offset}`);
+                            }
+                            return cleanNum(val);
                         };
-
                         monthlyData.push({
                             month: capitalize(mName),
                             revenue: getVal(locRev),
@@ -1212,14 +1563,13 @@
 
                     cleanData.push({
                         customer: cleanCust.toUpperCase(),
-                        principle: (r[1] || "General").toString().toUpperCase().trim(),
-                        serviceType: (r[2] || "Unknown").toString().toUpperCase().trim(),
+                        principle: princ,
+                        serviceType: serv,
                         year: block.year,
                         monthlyData: monthlyData
                     });
                 });
             }
-            console.log(`Parsed ${cleanData.length} total rows from Excel.`);
             return cleanData;
         }
 
@@ -1228,7 +1578,35 @@
 
         // --- APP STATE ---
         let allData = [], charts = {};
-        let newTradersList = [], lostCustomersList = [], regularCustomersList = [];
+        const STORAGE_KEY = 'sales_dashboard_all_data';
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    allData = JSON.parse(saved);
+                    enrichSalesData(allData);
+                    initFilters();
+                    dashboardContent.classList.remove('hidden');
+                    uploadArea.style.display = 'none';
+                    updateDashboard();
+                }
+            } catch (e) { console.error("Load error:", e); }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+            } catch (e) { alert("Storage full or blocked!"); }
+        }
+
+        async function clearAllData() {
+            if (confirm("Hapus semua data dashboard? Data yang sudah di-upload akan hilang dari browser ini.")) {
+                localStorage.clear();
+                await localforage.clear();
+                location.reload();
+            }
+        }
 
         // Dom Refs
         const fileInput = document.getElementById('fileInput'), uploadArea = document.getElementById('uploadArea'), dashboardContent = document.getElementById('dashboardContent');
@@ -1262,10 +1640,15 @@
                 // MERGE logic: Keep history, update with new data
                 allData = mergeSalesData(allData, newData);
 
+                // Save RAW and PROCESSED for redundancy
+                saveDataToStorage(window.rawSheetData, 'rawSheetData');
+                localStorage.setItem('sales_dashboard_all_data', JSON.stringify(allData));
+
                 enrichSalesData(allData);
                 initFilters();
                 uploadArea.style.display = 'none'; dashboardContent.classList.remove('hidden');
                 updateDashboard();
+                showToast("Data Updated & Saved!");
             } catch (err) {
                 alert(err);
                 if (uploadArea) uploadArea.innerHTML = `<button onclick="location.reload()">Retry</button>`;
@@ -1284,11 +1667,11 @@
                 if (map.has(key)) {
                     const oldRow = map.get(key);
                     r.monthlyData.forEach(mIn => {
-                        const mOld = oldRow.monthlyData.find(m => m.month === mIn.month);
-                        if (mOld) {
-                            // Only update if incoming has non-zero values to avoid clearing old data
-                            if (mIn.revenue !== 0 || mIn.gp !== 0 || mIn.weight !== 0 || mIn.pcs !== 0) {
-                                Object.assign(mOld, mIn);
+                        const mOldIdx = oldRow.monthlyData.findIndex(m => m.month === mIn.month);
+                        // If month exists, OVERWRITE if incoming is non-zero
+                        if (mOldIdx !== -1) {
+                            if (mIn.revenue !== 0 || mIn.gp !== 0 || mIn.weight !== 0) {
+                                oldRow.monthlyData[mOldIdx] = mIn;
                             }
                         } else {
                             oldRow.monthlyData.push(mIn);
@@ -1367,15 +1750,22 @@
         }
 
         function updateDashboard() {
-            // REMOVED Redundant enrichment
-            // enrichSalesData(allData); 
+            // Enrich Data First
+            enrichSalesData(allData);
+
+            console.log("ANTIGRAVITY: Dashboard Updating - v1.16 (+Projection Tab)");
+
+            // If we are on projection tab, update it too
+            if (!document.getElementById('tabContentProjection').classList.contains('hidden')) {
+                updateProjectionLayer();
+            }
 
             let activeData = [...allData];
 
             // FORECAST LOGIC
             const isForecast = document.getElementById('forecastToggle') && document.getElementById('forecastToggle').checked;
             if (isForecast) {
-                const pipeline = JSON.parse(localStorage.getItem('pipeline_myrna') || '[]');
+                const pipeline = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
                 const wonItems = pipeline.filter(p => p.status === 'Won' && p.ready && p.rev);
 
                 wonItems.forEach(item => {
@@ -1614,7 +2004,7 @@
 
             // Debug: per-month breakdown
             const monthTotals = {};
-            const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             monthOrder.forEach(m => monthTotals[m] = 0);
 
             data.forEach(row => row.monthlyData.forEach(m => {
@@ -1638,91 +2028,75 @@
             if (dbg) {
                 const rows = monthOrder.map(mo => `<td class="px-2">${mo}</td><td class="px-2 text-right font-mono">${f(monthTotals[mo], true)}</td>`);
                 dbg.innerHTML = `<div class="mt-2 text-xs"><strong>📊 Revenue Per Bulan (${filterYear.value}):</strong>
-                <table class="mt-1 border-collapse"><tr>${rows.slice(0,6).map(r=>`<tr>${r}</tr>`).join('')}${rows.slice(6).map(r=>`<tr>${r}</tr>`).join('')}</tr></table>
+                <table class="mt-1 border-collapse"><tr>${rows.slice(0, 6).map(r => `<tr>${r}</tr>`).join('')}${rows.slice(6).map(r => `<tr>${r}</tr>`).join('')}</tr></table>
                 <div class="mt-1 text-slate-500">Total rows in filteredData: ${data.length} | Active monthFilter: <b>${monthFilter}</b></div></div>`;
             }
         }
 
         // Stats Logic (Fix: Aggregate first to handle multiple rows per customer)
         function getTraderStats(allData, year, month, principleFilter, customerFilter) {
-            const aggHistory = {};
+            const aggGlobal = {}; // For status determination (across all principles)
+            const selectedPrinciples = {}; // Principle mapping for display
 
-            // 1. Aggregate Data
+            // 1. Aggregate Global History
             allData.forEach(row => {
-                if (principleFilter !== 'all' && row.principle !== principleFilter) return;
                 const k = row.customer;
-                if (!aggHistory[k]) aggHistory[k] = {};
+                if (!aggGlobal[k]) aggGlobal[k] = {};
+                if (!selectedPrinciples[k]) selectedPrinciples[k] = new Set();
+
+                selectedPrinciples[k].add(row.principle);
 
                 row.monthlyData.forEach((m, idx) => {
                     const gIdx = (parseInt(row.year) * 12) + idx;
-                    if (!aggHistory[k][gIdx]) aggHistory[k][gIdx] = {
-                        year: row.year,
-                        month: m.month,
-                        rev: 0,
-                        principle: row.principle, // Keep last or mix (mostly for display)
-                        gIdx: gIdx
-                    };
-                    aggHistory[k][gIdx].rev += m.revenue;
+                    if (!aggGlobal[k][gIdx]) aggGlobal[k][gIdx] = { rev: 0, year: row.year.toString(), month: m.month, gIdx: gIdx };
+                    aggGlobal[k][gIdx].rev += m.revenue;
                 });
             });
 
             const newTraders = [], lostCustomers = [], regularCustomers = [];
 
-            // 2. Analyze Timeline
-            Object.keys(aggHistory).forEach(cust => {
-                // Convert to sorted array
-                const timeline = Object.values(aggHistory[cust]).sort((a, b) => a.gIdx - b.gIdx);
+            // 2. Status Analysis (Global)
+            Object.keys(aggGlobal).forEach(cust => {
+                if (customerFilter !== 'all' && cust !== customerFilter) return;
+                if (principleFilter !== 'all' && !selectedPrinciples[cust].has(principleFilter)) return;
 
-                timeline.forEach((point, i) => {
-                    // Filter Context
+                const timeline = Object.values(aggGlobal[cust]).sort((a, b) => a.gIdx - b.gIdx);
+
+                const getGlobalRev = (point, monthsBack) => {
+                    const targetIdx = point.gIdx - monthsBack;
+                    const p = timeline.find(t => t.gIdx === targetIdx);
+                    return p ? p.rev : 0;
+                };
+
+                timeline.forEach((point) => {
                     if (point.year != year) return;
                     if (month !== 'all' && point.month !== month) return;
 
-                    // Helper to get historical revenue safely
-                    // Since we aggregated by gIdx, points are unique per month.
-                    // We just need to check if previous gIdx exists in the timeline
-                    const getRev = (monthsBack) => {
-                        const targetIdx = point.gIdx - monthsBack;
-                        // Find point in timeline (since it is sorted, we could optimize, but find is safe)
-                        const p = timeline.find(t => t.gIdx === targetIdx);
-                        return p ? p.rev : 0;
-                    };
+                    const p1 = getGlobalRev(point, 1), p2 = getGlobalRev(point, 2), p3 = getGlobalRev(point, 3);
+                    const princDisplay = principleFilter !== 'all' ? principleFilter : Array.from(selectedPrinciples[cust])[0];
 
-                    const p1 = getRev(1), p2 = getRev(2), p3 = getRev(3);
+                    const firstActive = timeline.find(t => t.rev > 0);
+                    const startIdx = firstActive ? firstActive.gIdx : 9999999;
 
-                    // New / Reactivated: Current > 0, Prev 3 months == 0
-                    if (point.rev > 0 && p1 === 0 && p2 === 0 && p3 === 0) {
-                        if (!newTraders.find(r => r.customer === cust)) {
-                            newTraders.push({ customer: cust, principle: point.principle, month: point.month, rev: point.rev, prev: [p1, p2, p3] });
-                        }
+                    // NEW TRADER (Target 14): Shipped within the last 3 months cycle
+                    // If they started in this month, last month, or 2 months ago, they are still "New"
+                    if (point.rev > 0 && point.gIdx >= startIdx && point.gIdx <= (startIdx + 2)) {
+                        newTraders.push({ customer: cust, principle: princDisplay, month: point.month, rev: point.rev, prev: [p1, p2, p3] });
                     }
-
-                    // Lost: Current == 0 (Wait, point.rev is from data. If rev is 0, it might exist in data as 0 or not exist)
-                    // If point exists and rev is 0, check history.
-                    // If point DOES NOT exist (no sales row), we can't iterate it here.
-                    // ISSUE: "Lost" definition is "Has no revenue".
-                    // If a customer isn't in the Excel for this month, they won't be in 'timeline'.
-                    // BUT `allData` usually explicitly lists months (Jan-Dec) with 0 revenue if the row exists.
-                    // If the row doesn't exist for 2025, they are totally lost.
-                    // Assuming row exists with 0 revenue:
-                    if (point.rev === 0 && p1 === 0 && p2 === 0 && i >= 2) {
-                        // Logic: 3 consec 0 (Curr 0, P1 0, P2 0).
-                        // Check if they were ever active? `i>=2` implies at least 2 monts history.
-                        // We strictly need to check if they imply "Lost" status. 
-                        // Let's stick to the requested logic: Zero Rev for 3 consec months.
-                        if (!lostCustomers.find(r => r.customer === cust)) {
-                            lostCustomers.push({ customer: cust, principle: point.principle, month: point.month, vals: [point.rev, p1, p2] });
-                        }
+                    // REGULAR (Target 18): Consistent (3 months straight) AND no longer in "New" phase
+                    else if (point.rev > 0 && p1 > 0 && p2 > 0 && point.gIdx > (startIdx + 2)) {
+                        regularCustomers.push({ customer: cust, principle: princDisplay, month: point.month, rev: point.rev, vals: [point.rev, p1, p2] });
                     }
-
-                    // Regular: Current > 0, Prev 2 months > 0
-                    if (point.rev > 0 && p1 > 0 && p2 > 0) {
-                        if (!regularCustomers.find(r => r.customer === cust)) {
-                            regularCustomers.push({ customer: cust, principle: point.principle, month: point.month, vals: [point.rev, p1, p2] });
+                    // LOST (Target 91): Current Pool of Inactive. Zero for 3 months AND ever active before.
+                    else if (point.rev === 0 && p1 === 0 && p2 === 0) {
+                        const wasActiveBefore = timeline.some(t => t.gIdx < (point.gIdx - 2) && t.rev > 0);
+                        if (wasActiveBefore) {
+                            lostCustomers.push({ customer: cust, principle: princDisplay, month: point.month, rev: 0, vals: [0, p1, p2] });
                         }
                     }
                 });
             });
+            console.log(`DEBUG STATS [${year} ${month}]: NT=${newTraders.length}, RC=${regularCustomers.length}, LC=${lostCustomers.length}`);
             return { newTraders, lostCustomers, regularCustomers };
         }
         function updateTraderKPIs(stats, year, month) {
@@ -1735,19 +2109,27 @@
 
         // --- NEW: Props Handler ---
         window.handleBudgetChange = function (year, month, val) {
-            localStorage.setItem(`budget_${year}_${month}`, val);
+            const targetKey = `target_rev_${year}_${month}`;
+            localStorage.setItem(targetKey, val);
+            localStorage.setItem(`budget_${year}_${month}`, val); // Keep both for backward compatibility or dual use
+
             const rowRev = document.getElementById(`rev_raw_${year}_${month}`)?.innerText.replace(/\./g, '') || 0;
             const revVal = parseFloat(rowRev);
             const budgetVal = parseFloat(val);
             const achvEl = document.getElementById(`achv_${year}_${month}`);
             if (achvEl) {
                 if (!budgetVal || budgetVal === 0) {
-                    achvEl.innerText = '-'; achvEl.className = "px-3 py-2 text-right border-b border-slate-100 bg-blue-50/50 font-bold text-slate-400";
+                    achvEl.innerText = '-'; achvEl.className = "px-3 py-2 text-right border-b border-slate-100 bg-pink-50/50 font-bold text-slate-400";
                 } else {
                     const pct = (revVal / budgetVal);
                     achvEl.innerText = new Intl.NumberFormat('id-ID', { style: 'percent', maximumFractionDigits: 1 }).format(pct);
-                    achvEl.className = `px-3 py-2 text-right border-b border-slate-100 bg-blue-50/50 font-bold ${pct >= 1 ? 'text-green-600' : 'text-orange-500'}`;
+                    achvEl.className = `px-3 py-2 text-right border-b border-slate-100 bg-pink-50/50 font-bold ${pct >= 1 ? 'text-green-600' : 'text-orange-500'}`;
                 }
+            }
+
+            // Link to Projection Tab if currently active or filtered
+            if (filterMonth.value === month && filterYear.value === year) {
+                updateProjectionLayer();
             }
         }
         window.handleSalesChange = function (year, month, val) {
@@ -1826,7 +2208,7 @@
                     growTrad = 1; // 100% Growth
                 }
 
-                const savedBudget = localStorage.getItem(`budget_${year}_${m}`) || "";
+                const savedBudget = localStorage.getItem(`target_rev_${year}_${m}`) || localStorage.getItem(`budget_${year}_${m}`) || "";
                 const budgetVal = parseFloat(savedBudget) || 0;
                 const achv = budgetVal > 0 ? currR / budgetVal : 0;
 
@@ -1991,7 +2373,23 @@
         function showNewTraderModal() { document.getElementById('ntTableBody').innerHTML = genTable(newTradersList, 'blue'); document.getElementById('ntModal').classList.remove('opacity-0', 'pointer-events-none'); }
         function showLostCustomerModal() { document.getElementById('lcTableBody').innerHTML = genTable(lostCustomersList, 'red'); document.getElementById('lcModal').classList.remove('opacity-0', 'pointer-events-none'); }
         function showRegularCustomerModal() { document.getElementById('rcTableBody').innerHTML = genTable(regularCustomersList, 'green'); document.getElementById('rcModal').classList.remove('opacity-0', 'pointer-events-none'); }
-        function genTable(l, c) { if (!l || l.length == 0) return `<tr><td colspan="4" class="text-center p-4 text-slate-400">No data</td></tr>`; const cl = c == 'red' ? 'text-red-600' : c == 'green' ? 'text-green-600' : 'text-blue-600'; return l.map(i => `<tr><td class="px-4 py-2 font-medium">${i.customer}</td><td class="px-4 py-2 text-xs text-slate-500">${getPrincipleLogo(i.principle)}</td><td class="px-4 py-2 text-right font-bold ${cl}">${new Intl.NumberFormat('id-ID').format(i.rev || i.vals[0])}</td><td class="px-4 py-2 text-right text-xs text-slate-400">History</td></tr>`).join(''); }
+        function genTable(l, c) {
+            if (!l || l.length == 0) return `<tr><td colspan="4" class="text-center p-4 text-slate-400">No data</td></tr>`;
+            const cl = c == 'red' ? 'text-red-600' : c == 'green' ? 'text-green-600' : 'text-blue-600';
+            const f = (n) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
+
+            return l.map(i => {
+                const hist = i.prev ? i.prev.map(v => f(v)).join(' | ') : (i.vals ? i.vals.slice(1).map(v => f(v)).join(' | ') : '');
+                const currentVal = i.rev || (i.vals ? i.vals[0] : 0);
+
+                return `<tr>
+                    <td class="px-4 py-2 font-medium">${i.customer}</td>
+                    <td class="px-4 py-2 text-xs text-slate-500">${getPrincipleLogo(i.principle)}</td>
+                    <td class="px-4 py-2 text-right font-bold ${cl}">${f(currentVal)}</td>
+                    <td class="px-4 py-2 text-right text-[10px] text-slate-400 font-mono">${hist}</td>
+                </tr>`;
+            }).join('');
+        }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('opacity-0', 'pointer-events-none')); }
         feather.replace();
     </script>
@@ -2203,6 +2601,7 @@
             }
 
             loadDataFromStorage();
+            loadData(); // Load processed allData from localStorage
         });
     </script>
 </body>
