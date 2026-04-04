@@ -423,7 +423,7 @@
                                     <th class="px-4 py-3 w-10 text-center"></th>
                                 </tr>
                             </thead>
-                            <tbody id="pipelineTableBody" class="divide-y divide-blue-50">
+                            <tbody class="pipelineTableBodySync divide-y divide-blue-50">
                                 <!-- Rows injected by JS -->
                             </tbody>
                             <tfoot class="bg-slate-50 border-t border-slate-100">
@@ -431,7 +431,7 @@
                                     <td colspan="3"
                                         class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
                                         Total Potential:</td>
-                                    <td id="pipelineTotalRev" class="px-4 py-3 text-right font-bold text-blue-700">-
+                                    <td class="pipelineTotalRevSync px-4 py-3 text-right font-bold text-blue-700">-
                                     </td>
                                     <td colspan="2"></td>
                                 </tr>
@@ -484,11 +484,11 @@
                     }
 
                     function renderPipeline() {
-                        const tbody = document.getElementById('pipelineTableBody');
-                        if (!tbody) return;
+                        const tbodies = document.querySelectorAll('.pipelineTableBodySync');
+                        if (!tbodies.length) return;
 
                         let total = 0;
-                        tbody.innerHTML = pipelineData.map(item => {
+                        const htmlContent = pipelineData.map(item => {
                             total += (item.rev || 0);
                             return `
                         <tr class="hover:bg-blue-50/20 transition group">
@@ -552,7 +552,10 @@
                         `;
                         }).join('');
 
-                        document.getElementById('pipelineTotalRev').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
+                        tbodies.forEach(tbody => tbody.innerHTML = htmlContent);
+                        
+                        const formattedTotal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
+                        document.querySelectorAll('.pipelineTotalRevSync').forEach(el => el.innerText = formattedTotal);
                         feather.replace();
                     }
 
@@ -744,6 +747,81 @@
                         </div>
                     </div>
                 </div>
+                <!-- YEARLY PROJECTION MATRIX -->
+                <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg"><i data-feather="calendar" class="w-4 h-4"></i></div>
+                            <div>
+                                <h3 class="font-bold text-slate-700">Multi-Month Projection Matrix</h3>
+                                <p class="text-xs text-slate-400">Overview of projection and gaps across all months</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-center">
+                            <thead class="bg-slate-50 text-slate-500 font-bold text-[10px] uppercase border-b border-slate-100">
+                                <tr>
+                                    <th class="px-3 py-3 text-left">Month</th>
+                                    <th class="px-3 py-3">Budget (Trg)</th>
+                                    <th class="px-3 py-3 border-r border-slate-100 text-slate-400">B. Per Day</th>
+                                    <th class="px-3 py-3 text-slate-400">B. Per Wk</th>
+                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">Rev (Act/Prj)</th>
+                                    <th class="px-3 py-3 border-r border-slate-100 text-blue-700 bg-blue-50/30">ADNR</th>
+                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">Rev Per Wk</th>
+                                    <th class="px-3 py-3">Gap/Month</th>
+                                    <th class="px-3 py-3">Gap/Wk</th>
+                                    <th class="px-3 py-3">Gap/Day</th>
+                                </tr>
+                            </thead>
+                            <tbody id="yearlyProjectionTableBody" class="divide-y divide-slate-50 font-mono text-xs">
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MIRRORED PIPELINE SECTION -->
+                <div class="bg-white rounded-xl shadow-lg border border-blue-100 overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello" class="w-4 h-4"></i></div>
+                            <div>
+                                <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
+                                <p class="text-xs text-slate-400">Monitor potential opportunities & traffic (Mirrored)</p>
+                            </div>
+                        </div>
+                        <button onclick="addPipelineRow()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
+                            <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 min-w-[150px]">Customer</th>
+                                    <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
+                                    <th class="px-4 py-3 w-40">Type</th>
+                                    <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
+                                    <th class="px-4 py-3 w-32">Est. Ready</th>
+                                    <th class="px-4 py-3 w-32">Status</th>
+                                    <th class="px-4 py-3 w-10 text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="pipelineTableBodySync divide-y divide-blue-50">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                            <tfoot class="bg-slate-50 border-t border-slate-100">
+                                <tr>
+                                    <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">Total Potential:</td>
+                                    <td class="pipelineTotalRevSync px-4 py-3 text-right font-bold text-blue-700">-</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
             </div> <!-- End tabContentProjection -->
 
             <!-- Footer -->
@@ -1003,8 +1081,8 @@
                     const storeKeyUserGP = `user_gp_${yr}_${mo}`;
                     const storeKeyCurDay = `cur_day_manual_${yr}_${mo}`;
 
-                    const tRev = parseFloat(localStorage.getItem(storeKeyRev)) || 0;
-                    const tGP = parseFloat(localStorage.getItem(storeKeyGP)) || 0;
+                    const tRev = cleanNum(localStorage.getItem(storeKeyRev)) || 0;
+                    const tGP = cleanNum(localStorage.getItem(storeKeyGP)) || 0;
                     const eDays = parseInt(localStorage.getItem(storeKeyDays)) || 0;
                     const uRev = localStorage.getItem(storeKeyUserRev) || "";
                     const uGP = localStorage.getItem(storeKeyUserGP) || "";
@@ -1108,6 +1186,76 @@
                     const elProjGPPct = document.getElementById('dispProjGPPct'); if (elProjGPPct) elProjGPPct.innerText = `${p(pAchvGP)} Estimated Full-Month`;
 
                     feather.replace();
+                    if(typeof renderYearlyProjectionTable === 'function') renderYearlyProjectionTable();
+                }
+
+                function renderYearlyProjectionTable() {
+                    const elBody = document.getElementById('yearlyProjectionTableBody');
+                    if (!elBody) return;
+                    
+                    const yr = filterYear.value;
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const f = (n) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
+                    
+                    let htmlString = "";
+                    
+                    months.forEach(mo => {
+                        const tRevObj = localStorage.getItem(`target_rev_${yr}_${mo}`);
+                        const B = parseFloat(tRevObj) || 0;
+                        const tDaysObj = localStorage.getItem(`target_days_${yr}_${mo}`);
+                        const D = parseFloat(tDaysObj) || 0;
+                        
+                        const uRevObj = localStorage.getItem(`user_rev_${yr}_${mo}`);
+                        const uRev = uRevObj !== null && uRevObj !== "" ? parseFloat(uRevObj) : null;
+                        const cDayObj = localStorage.getItem(`cur_day_manual_${yr}_${mo}`);
+                        const curDay = parseInt(cDayObj) || 0;
+
+                        let curRev = 0;
+                        if(typeof allData !== 'undefined' && Array.isArray(allData)) {
+                             allData.forEach(row => {
+                                 if (row.year == yr) {
+                                     row.monthlyData.forEach(m => { if (m.month == mo) curRev += m.revenue; });
+                                 }
+                             });
+                        }
+                        
+                        let R = curRev;
+                        if (uRev !== null) R = uRev;
+                        
+                        const BD = D > 0 ? (B / D) : 0;
+                        const BW = B / 4;
+                        const ADNR = curDay > 0 ? (R / curDay) : 0;
+                        const RW = R / 4;
+                        
+                        const gapMonth = R - B;
+                        const gapWeek = RW - BW;
+                        const gapDay = curDay > 0 && D > 0 ? (ADNR - BD) : 0;
+                        
+                        const fmtGap = (val) => {
+                             if(val === 0 && B === 0 && R === 0) return "-";
+                             const color = val < 0 ? 'text-red-500' : 'text-emerald-500';
+                             return `<span class="${color}">${val > 0 ? '+' : ''}${f(val)}</span>`;
+                        };
+                        
+                        const moColor = mo === filterMonth.value ? 'bg-indigo-50/40 font-bold text-indigo-700 scale-[1.01] shadow-sm relative z-10' : '';
+                        
+                        htmlString += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50 ${moColor}">
+                            <td class="px-3 py-3 text-left font-bold border-r border-slate-100 uppercase text-slate-600">${mo}</td>
+                            <td class="px-3 py-3">${B > 0 ? f(B) : '-'}</td>
+                            <td class="px-3 py-3 text-slate-400 border-r border-slate-100">${BD > 0 ? f(BD) : '-'}</td>
+                            <td class="px-3 py-3 text-slate-400">${BW > 0 ? f(BW) : '-'}</td>
+                            <td class="px-3 py-3 text-blue-700 bg-blue-50/20 font-bold">${R > 0 ? f(R) : '-'}</td>
+                            <td class="px-3 py-3 text-blue-700 bg-blue-50/20 border-r border-slate-100">${ADNR > 0 ? f(ADNR) : '-'}</td>
+                            <td class="px-3 py-3 text-blue-700 bg-blue-50/20">${RW > 0 ? f(RW) : '-'}</td>
+                            <td class="px-3 py-3 font-bold bg-slate-50/50">${fmtGap(gapMonth)}</td>
+                            <td class="px-3 py-3 bg-slate-50/50">${fmtGap(gapWeek)}</td>
+                            <td class="px-3 py-3 bg-slate-50/50 rounded-br-lg">${curDay > 0 && D > 0 ? fmtGap(gapDay) : '-'}</td>
+                        </tr>
+                        `;
+                    });
+                    
+                    elBody.innerHTML = htmlString;
                 }
 
                 window.saveTargets = function () {
@@ -2113,9 +2261,9 @@
             localStorage.setItem(targetKey, val);
             localStorage.setItem(`budget_${year}_${month}`, val); // Keep both for backward compatibility or dual use
 
-            const rowRev = document.getElementById(`rev_raw_${year}_${month}`)?.innerText.replace(/\./g, '') || 0;
-            const revVal = parseFloat(rowRev);
-            const budgetVal = parseFloat(val);
+            const rowRevText = document.getElementById(`rev_raw_${year}_${month}`)?.innerText || "0";
+            const revVal = cleanNum(rowRevText);
+            const budgetVal = cleanNum(val);
             const achvEl = document.getElementById(`achv_${year}_${month}`);
             if (achvEl) {
                 if (!budgetVal || budgetVal === 0) {
@@ -2209,7 +2357,7 @@
                 }
 
                 const savedBudget = localStorage.getItem(`target_rev_${year}_${m}`) || localStorage.getItem(`budget_${year}_${m}`) || "";
-                const budgetVal = parseFloat(savedBudget) || 0;
+                const budgetVal = cleanNum(savedBudget);
                 const achv = budgetVal > 0 ? currR / budgetVal : 0;
 
                 const rc = growRev > 0 ? 'text-green-600' : (growRev < 0 ? 'text-red-600' : 'text-slate-500');
