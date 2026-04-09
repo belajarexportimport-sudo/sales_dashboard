@@ -401,41 +401,47 @@
                             <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello"
                                     class="w-4 h-4"></i></div>
                             <div>
-                                <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
-                                <p class="text-xs text-slate-400">Monitor potential opportunities & traffic</p>
+                                <h3 class="font-bold text-slate-700">Fill in the GAP - Weekly Tracker</h3>
+                                <p class="text-xs text-slate-400">Track and close your weekly gap targets</p>
                             </div>
                         </div>
-                        <button onclick="addPipelineRow()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
-                            <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <select id="pipelineWeekFilterMain" onchange="filterPipelineWeek(this.value)" class="border rounded-lg px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 border-blue-200 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pipeline-week-filters">
+                                <option value="W1">Week 1</option>
+                                <option value="W2">Week 2</option>
+                                <option value="W3">Week 3</option>
+                                <option value="W4">Week 4</option>
+                            </select>
+                            <button onclick="addPipelineRow()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
+                                <i data-feather="plus-circle" class="w-3 h-3"></i> Add Row
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-6 py-3 bg-blue-50/10 border-b border-blue-50 flex gap-4">
+                        <div class="flex flex-col"><span class="text-[10px] font-bold text-slate-400 uppercase">Target Rev (Weekly)</span><span class="text-sm font-bold text-slate-700 font-mono displayTargetRevWk">0</span></div>
+                        <div class="flex flex-col"><span class="text-[10px] font-bold text-slate-400 uppercase">Target GP (Weekly)</span><span class="text-sm font-bold text-slate-700 font-mono displayTargetGPWk">0</span></div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
+                            <thead class="bg-blue-50 text-blue-700 font-bold text-[10px] uppercase">
                                 <tr>
-                                    <th class="px-4 py-3 min-w-[150px]">Customer</th>
-                                    <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
-                                    <th class="px-4 py-3 w-40">Type</th>
-                                    <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
-                                    <th class="px-4 py-3 w-32">Est. Ready</th>
-                                    <th class="px-4 py-3 w-32">Status</th>
-                                    <th class="px-4 py-3 w-10 text-center"></th>
+                                    <th class="px-2 py-3 w-10 text-center">No</th>
+                                    <th class="px-2 py-3 min-w-[150px]">Customer Name</th>
+                                    <th class="px-2 py-3 w-28">Trade Lane</th>
+                                    <th class="px-2 py-3 w-20">Origin</th>
+                                    <th class="px-2 py-3 w-20">Dest</th>
+                                    <th class="px-2 py-3 w-20 text-right">Weight</th>
+                                    <th class="px-2 py-3 w-32 text-right">Revenue</th>
+                                    <th class="px-2 py-3 w-32 text-right">GP</th>
+                                    <th class="px-2 py-3 w-32 text-right">VS Revenue</th>
+                                    <th class="px-2 py-3 w-32 text-right">VS GP</th>
+                                    <th class="px-2 py-3 w-10 text-center">Act</th>
                                 </tr>
                             </thead>
                             <tbody class="pipelineTableBodySync divide-y divide-blue-50">
                                 <!-- Rows injected by JS -->
                             </tbody>
-                            <tfoot class="bg-slate-50 border-t border-slate-100">
-                                <tr>
-                                    <td colspan="3"
-                                        class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
-                                        Total Potential:</td>
-                                    <td class="pipelineTotalRevSync px-4 py-3 text-right font-bold text-blue-700">-
-                                    </td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
+                            <tfoot class="bg-slate-50 border-t border-slate-100"><tr><td colspan="11" class="px-4 py-3 text-center text-xs text-slate-400">Total running balance is calculated top-to-bottom.</td></tr></tfoot>
                         </table>
                     </div>
                 </div>
@@ -447,6 +453,13 @@
                 <script>
                     // --- PIPELINE LOGIC ---
                     let pipelineData = JSON.parse(localStorage.getItem('pipeline_sales_dashboard') || '[]');
+                    let currentPipelineWeek = "W1";
+
+                    function filterPipelineWeek(weekVal) {
+                        currentPipelineWeek = weekVal;
+                        document.querySelectorAll('.pipeline-week-filters').forEach(el => el.value = weekVal);
+                        renderPipeline();
+                    }
 
                     function savePipeline() {
                         localStorage.setItem('pipeline_sales_dashboard', JSON.stringify(pipelineData));
@@ -456,20 +469,28 @@
                     }
 
                     function addPipelineRow() {
+                        const yr = document.getElementById('filterYear') ? document.getElementById('filterYear').value : new Date().getFullYear().toString();
+                        let mo = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : "all";
+                        if(mo === "all") mo = "Jan"; // default if year selected
+
                         pipelineData.push({
                             id: Date.now(),
+                            month: mo,
+                            year: yr,
+                            week: currentPipelineWeek,
                             customer: '',
-                            traffic: '',
-                            type: 'New Customer',
+                            tradeLane: 'Air Freight',
+                            origin: '',
+                            dest: '',
+                            weight: 0,
                             rev: 0,
-                            ready: '',
-                            status: 'Profiling'
+                            gp: 0
                         });
                         savePipeline();
                     }
 
                     function deletePipelineRow(id) {
-                        if (confirm('Remove this opportunity?')) {
+                        if (confirm('Remove this row?')) {
                             pipelineData = pipelineData.filter(i => i.id !== id);
                             savePipeline();
                         }
@@ -478,117 +499,163 @@
                     function updatePipeline(id, field, val) {
                         const row = pipelineData.find(i => i.id === id);
                         if (row) {
-                            row[field] = (field === 'rev') ? parseFloat(val) || 0 : val;
+                            if(field === 'weight' || field === 'rev' || field === 'gp') {
+                                row[field] = parseFloat(val) || 0;
+                            } else {
+                                row[field] = val;
+                            }
                             savePipeline();
                         }
+                    }
+
+                    function getWeeklyTargets() {
+                        const yr = document.getElementById('filterYear') ? document.getElementById('filterYear').value : new Date().getFullYear().toString();
+                        const mo = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : "all";
+                        
+                        if(mo === 'all') return { revWk: 0, gpWk: 0 };
+                        
+                        // Use Gap logic if available, else just use targeted monthly / 4
+                        const tRev = cleanNum(localStorage.getItem(`target_rev_${yr}_${mo}`)) || 0;
+                        const tGP = cleanNum(localStorage.getItem(`target_gp_${yr}_${mo}`)) || 0;
+                        
+                        // Retrieve ADNR projections gap from the projection matrix memory if needed
+                        // For simplicity, we just divide monthly target / 4 as base standard.
+                        // However, we want "GAP", so we need (Target - ActualYTD) / 4. 
+                        // But wait! Weekly Tracker needs a fixed gap per week.
+                        // Let's use (MonthlyTarget / 4) to distribute evenly, since gap varies day by day.
+                        
+                        // We will use MonthlyGap stored from Projection Matrix if we have it, else falls back.
+                        const gapRevStr = localStorage.getItem(`gap_rev_${yr}_${mo}`);
+                        const gapGPStr = localStorage.getItem(`gap_gp_${yr}_${mo}`);
+                        
+                        let baseGapRev = tRev;
+                        if(gapRevStr !== null) baseGapRev = cleanNum(gapRevStr);
+                        
+                        let baseGapGP = tGP;
+                        if(gapGPStr !== null) baseGapGP = cleanNum(gapGPStr);
+                        
+                        return { 
+                            revWk: (tRev / 4) || 0, // Using Target/4 instead of Gap to provide stable weekly target
+                            gpWk: (tGP / 4) || 0
+                        };
                     }
 
                     function renderPipeline() {
                         const tbodies = document.querySelectorAll('.pipelineTableBodySync');
                         if (!tbodies.length) return;
 
-                        let total = 0;
-                        const htmlContent = pipelineData.map(item => {
-                            total += (item.rev || 0);
+                        const yr = document.getElementById('filterYear') ? document.getElementById('filterYear').value : new Date().getFullYear().toString();
+                        const mo = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : "all";
+
+                        const targets = getWeeklyTargets();
+                        const formattedWRev = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(targets.revWk);
+                        const formattedWGP = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(targets.gpWk);
+                        
+                        document.querySelectorAll('.displayTargetRevWk').forEach(el => el.innerText = formattedWRev);
+                        document.querySelectorAll('.displayTargetGPWk').forEach(el => el.innerText = formattedWGP);
+
+                        // Filter data by current month, year, and week
+                        const filteredData = pipelineData.filter(d => d.month === mo && d.year === yr && d.week === currentPipelineWeek);
+
+                        let runningVSRev = targets.revWk;
+                        let runningVSGP = targets.gpWk;
+
+                        const htmlContent = filteredData.map((item, index) => {
+                            runningVSRev -= (item.rev || 0);
+                            runningVSGP -= (item.gp || 0);
+                            
+                            const formatIDR = (val) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(val);
+                            const vsRevColor = runningVSRev < 0 ? 'text-green-600' : 'text-red-500';
+                            const vsGpColor = runningVSGP < 0 ? 'text-green-600' : 'text-red-500';
+
                             return `
                         <tr class="hover:bg-blue-50/20 transition group">
+                            <td class="px-2 py-2 text-center text-xs font-bold text-slate-400">${index + 1}</td>
                             <td class="px-2 py-2">
                                 <input type="text" list="customerListOptions" 
-                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-slate-700 font-bold"
-                                    placeholder="Customer Name..."
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-slate-700 font-bold text-xs"
+                                    placeholder="Customer..."
                                     value="${item.customer}"
                                     onchange="updatePipeline(${item.id}, 'customer', this.value)"
                                 >
                             </td>
                             <td class="px-2 py-2">
-                                <input type="text" 
-                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-slate-600 text-xs"
-                                    placeholder="e.g. OB-US-2kg..."
-                                    value="${item.traffic}"
-                                    onchange="updatePipeline(${item.id}, 'traffic', this.value)"
-                                >
-                            </td>
-                            <td class="px-2 py-2">
                                 <select 
-                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-xs font-semibold ${item.type === 'New Reactivated (Lost/Lapsed)' ? 'text-purple-600 bg-purple-50' : (item.type === 'Cross Sell' ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50')}"
-                                    onchange="updatePipeline(${item.id}, 'type', this.value)"
-                                >
-                                    <option value="New Reactivated (Lost/Lapsed)" ${item.type === 'New Reactivated (Lost/Lapsed)' ? 'selected' : ''}>New Reactivated (Lost/Lapsed)</option>
-                                    <option value="New Customer" ${item.type === 'New Customer' ? 'selected' : ''}>New Customer</option>
-                                    <option value="Cross Sell" ${item.type === 'Cross Sell' ? 'selected' : ''}>Cross Sell</option>
+                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-[10px] font-semibold text-blue-600"
+                                    onchange="updatePipeline(${item.id}, 'tradeLane', this.value)">
+                                    <option value="Air Freight" ${item.tradeLane === 'Air Freight' ? 'selected' : ''}>Air Freight</option>
+                                    <option value="Ocean Freight" ${item.tradeLane === 'Ocean Freight' ? 'selected' : ''}>Ocean Freight</option>
+                                    <option value="Customs" ${item.tradeLane === 'Customs' ? 'selected' : ''}>Customs</option>
+                                    <option value="Domestic" ${item.tradeLane === 'Domestic' ? 'selected' : ''}>Domestic</option>
                                 </select>
                             </td>
                             <td class="px-2 py-2">
-                                <input type="number" 
-                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-right font-mono text-slate-700"
-                                    placeholder="0"
-                                    value="${item.rev}"
-                                    onchange="updatePipeline(${item.id}, 'rev', this.value)"
-                                >
+                                <input type="text" class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-1 py-1 outline-none text-slate-600 text-[10px] uppercase"
+                                    placeholder="ORG" value="${item.origin}" onchange="updatePipeline(${item.id}, 'origin', this.value)">
                             </td>
                             <td class="px-2 py-2">
-                                <input type="date" 
-                                    class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-xs text-slate-500 font-medium cursor-pointer"
-                                    value="${item.ready}"
-                                    onchange="updatePipeline(${item.id}, 'ready', this.value)"
-                                >
+                                <input type="text" class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-1 py-1 outline-none text-slate-600 text-[10px] uppercase"
+                                    placeholder="DST" value="${item.dest}" onchange="updatePipeline(${item.id}, 'dest', this.value)">
                             </td>
                             <td class="px-2 py-2">
-                                <select 
-                                    class="w-full border border-transparent rounded px-2 py-1 outline-none text-xs font-bold ${item.status === 'Won' ? 'bg-green-100 text-green-700' : (item.status === 'Lost' ? 'bg-red-100 text-red-500' : (item.status === 'Negotiation' ? 'bg-orange-100 text-orange-600' : (item.status === 'Proposal' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600')))}"
-                                    onchange="updatePipeline(${item.id}, 'status', this.value)"
-                                >
-                                    <option value="Profiling" ${item.status === 'Profiling' || !item.status ? 'selected' : ''}>Profiling</option>
-                                    <option value="Proposal" ${item.status === 'Proposal' ? 'selected' : ''}>Proposal</option>
-                                    <option value="Negotiation" ${item.status === 'Negotiation' ? 'selected' : ''}>Negotiation</option>
-                                    <option value="Won" ${item.status === 'Won' ? 'selected' : ''}>WON</option>
-                                    <option value="Lost" ${item.status === 'Lost' ? 'selected' : ''}>Lost</option>
-                                </select>
+                                <input type="number" class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-300 focus:bg-white rounded px-1 py-1 outline-none text-right font-mono text-[10px] font-bold"
+                                    placeholder="0" value="${item.weight}" onchange="updatePipeline(${item.id}, 'weight', this.value)">
+                            </td>
+                            <td class="px-2 py-2">
+                                <input type="number" class="w-full bg-transparent border border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-right font-mono text-xs text-blue-700 bg-white"
+                                    placeholder="0" value="${item.rev}" onchange="updatePipeline(${item.id}, 'rev', this.value)">
+                            </td>
+                            <td class="px-2 py-2">
+                                <input type="number" class="w-full bg-transparent border border-slate-200 focus:border-blue-300 focus:bg-white rounded px-2 py-1 outline-none text-right font-mono text-xs text-emerald-700 bg-white"
+                                    placeholder="0" value="${item.gp}" onchange="updatePipeline(${item.id}, 'gp', this.value)">
+                            </td>
+                            <td class="px-2 py-2 text-right">
+                                <div class="font-mono text-xs font-bold ${vsRevColor}">${formatIDR(runningVSRev)}</div>
+                            </td>
+                            <td class="px-2 py-2 text-right">
+                                <div class="font-mono text-xs font-bold ${vsGpColor}">${formatIDR(runningVSGP)}</div>
                             </td>
                             <td class="px-2 py-2 text-center">
-                                <button onclick="deletePipelineRow(${item.id})" class="text-slate-300 hover:text-red-500 transition p-1"><i data-feather="trash-2" class="w-4 h-4"></i></button>
+                                <button onclick="deletePipelineRow(${item.id})" class="text-slate-300 hover:text-red-500 transition p-1"><i data-feather="trash-2" class="w-3 h-3"></i></button>
                             </td>
                         </tr>
                         `;
                         }).join('');
 
-                        tbodies.forEach(tbody => tbody.innerHTML = htmlContent);
+                        if(htmlContent === '') {
+                            tbodies.forEach(tbody => tbody.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-400 text-sm">No gap data for ${mo} ${yr} - Week ${currentPipelineWeek.replace('W','')}. Add a row to start tracking.</td></tr>`);
+                        } else {
+                            tbodies.forEach(tbody => tbody.innerHTML = htmlContent);
+                        }
                         
-                        const formattedTotal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(total);
-                        document.querySelectorAll('.pipelineTotalRevSync').forEach(el => el.innerText = formattedTotal);
-                        feather.replace();
+                        try { feather.replace(); } catch(e){}
                     }
 
                     // Initial Render (Safe check)
                     document.addEventListener('DOMContentLoaded', () => {
-                        cleanPipelineData(); // Fix bad dates on load
+                        cleanPipelineData(); // Fix old format to new format
                         setTimeout(renderPipeline, 500);
                     });
 
                     function cleanPipelineData() {
                         let changed = false;
                         pipelineData.forEach(p => {
-                            if (!p.ready) return;
-                            const d = new Date(p.ready);
-                            if (isNaN(d.getTime())) {
-                                p.ready = new Date().toISOString().split('T')[0];
+                            if (p.ready) { 
+                                // Old format migration if needed
+                                delete p.ready; delete p.traffic; delete p.status; delete p.type;
+                                p.month = p.month || new Date().toLocaleString('default', { month: 'short' });
+                                p.year = p.year || new Date().getFullYear().toString();
+                                p.week = p.week || "W1";
+                                p.tradeLane = p.tradeLane || "Air Freight";
+                                p.origin = p.origin || "";
+                                p.dest = p.dest || "";
+                                p.weight = p.weight || 0;
+                                p.gp = p.gp || 0;
                                 changed = true;
-                            } else {
-                                const y = d.getFullYear();
-                                // Fix: Year 18985 or other garbage
-                                if (y < 2000 || y > 2040) {
-                                    p.ready = new Date().toISOString().split('T')[0];
-                                    changed = true;
-                                }
-                                // Fix: Invalid JS Format passed to input (e.g. "12/12/2024" isn't yyyy-MM-dd)
-                                if (!/^\d{4}-\d{2}-\d{2}$/.test(p.ready)) {
-                                    p.ready = d.toISOString().split('T')[0];
-                                    changed = true;
-                                }
                             }
                         });
                         if (changed) {
-                            console.log("Sanitized Pipeline Data (invalid dates fixed)");
+                            console.log("Migrated Pipeline Data to Gap Tracker format");
                             savePipeline();
                         }
                     }
@@ -763,12 +830,12 @@
                             <thead class="bg-slate-50 text-slate-500 font-bold text-[10px] uppercase border-b border-slate-100">
                                 <tr>
                                     <th class="px-3 py-3 text-left">Month</th>
-                                    <th class="px-3 py-3">Budget (Trg)</th>
-                                    <th class="px-3 py-3 border-r border-slate-100 text-slate-400">B. Per Day</th>
-                                    <th class="px-3 py-3 text-slate-400">B. Per Wk</th>
-                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">Rev (Act/Prj)</th>
+                                    <th class="px-3 py-3">BUDGET</th>
+                                    <th class="px-3 py-3 border-r border-slate-100 text-slate-400">BUDGET / DAY</th>
+                                    <th class="px-3 py-3 text-slate-400">BUDGET / WK</th>
+                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">REVENUE</th>
                                     <th class="px-3 py-3 border-r border-slate-100 text-blue-700 bg-blue-50/30">ADNR</th>
-                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">Rev Per Wk</th>
+                                    <th class="px-3 py-3 text-blue-700 bg-blue-50/30">REV / WK</th>
                                     <th class="px-3 py-3">Gap/Month</th>
                                     <th class="px-3 py-3">Gap/Wk</th>
                                     <th class="px-3 py-3">Gap/Day</th>
@@ -787,37 +854,47 @@
                         <div class="flex items-center gap-2">
                             <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><i data-feather="trello" class="w-4 h-4"></i></div>
                             <div>
-                                <h3 class="font-bold text-slate-700">Sales Pipeline Tracker</h3>
-                                <p class="text-xs text-slate-400">Monitor potential opportunities & traffic (Mirrored)</p>
+                                <h3 class="font-bold text-slate-700">Fill in the GAP - Weekly Tracker</h3>
+                                <p class="text-xs text-slate-400">Track and close your weekly gap targets (Mirrored)</p>
                             </div>
                         </div>
-                        <button onclick="addPipelineRow()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
-                            <i data-feather="plus-circle" class="w-3 h-3"></i> Add Opportunity
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <select id="pipelineWeekFilterProj" onchange="filterPipelineWeek(this.value)" class="border rounded-lg px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 border-blue-200 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pipeline-week-filters">
+                                <option value="W1">Week 1</option>
+                                <option value="W2">Week 2</option>
+                                <option value="W3">Week 3</option>
+                                <option value="W4">Week 4</option>
+                            </select>
+                            <button onclick="addPipelineRow()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-md shadow-blue-200">
+                                <i data-feather="plus-circle" class="w-3 h-3"></i> Add Row
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-6 py-3 bg-blue-50/10 border-b border-blue-50 flex gap-4">
+                        <div class="flex flex-col"><span class="text-[10px] font-bold text-slate-400 uppercase">Target Rev (Weekly)</span><span class="text-sm font-bold text-slate-700 font-mono displayTargetRevWk">0</span></div>
+                        <div class="flex flex-col"><span class="text-[10px] font-bold text-slate-400 uppercase">Target GP (Weekly)</span><span class="text-sm font-bold text-slate-700 font-mono displayTargetGPWk">0</span></div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase">
+                            <thead class="bg-blue-50 text-blue-700 font-bold text-[10px] uppercase">
                                 <tr>
-                                    <th class="px-4 py-3 min-w-[150px]">Customer</th>
-                                    <th class="px-4 py-3 min-w-[150px]">Traffic / Load</th>
-                                    <th class="px-4 py-3 w-40">Type</th>
-                                    <th class="px-4 py-3 text-right w-32">Est. Rev (IDR)</th>
-                                    <th class="px-4 py-3 w-32">Est. Ready</th>
-                                    <th class="px-4 py-3 w-32">Status</th>
-                                    <th class="px-4 py-3 w-10 text-center"></th>
+                                    <th class="px-2 py-3 w-10 text-center">No</th>
+                                    <th class="px-2 py-3 min-w-[150px]">Customer Name</th>
+                                    <th class="px-2 py-3 w-28">Trade Lane</th>
+                                    <th class="px-2 py-3 w-20">Origin</th>
+                                    <th class="px-2 py-3 w-20">Dest</th>
+                                    <th class="px-2 py-3 w-20 text-right">Weight</th>
+                                    <th class="px-2 py-3 w-32 text-right">Revenue</th>
+                                    <th class="px-2 py-3 w-32 text-right">GP</th>
+                                    <th class="px-2 py-3 w-32 text-right">VS Revenue</th>
+                                    <th class="px-2 py-3 w-32 text-right">VS GP</th>
+                                    <th class="px-2 py-3 w-10 text-center">Act</th>
                                 </tr>
                             </thead>
                             <tbody class="pipelineTableBodySync divide-y divide-blue-50">
                                 <!-- Rows injected by JS -->
                             </tbody>
-                            <tfoot class="bg-slate-50 border-t border-slate-100">
-                                <tr>
-                                    <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">Total Potential:</td>
-                                    <td class="pipelineTotalRevSync px-4 py-3 text-right font-bold text-blue-700">-</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
+                            <tfoot class="bg-slate-50 border-t border-slate-100"><tr><td colspan="11" class="px-4 py-3 text-center text-xs text-slate-400">Total running balance is calculated top-to-bottom.</td></tr></tfoot>
                         </table>
                     </div>
                 </div>
@@ -1659,7 +1736,18 @@
                 if (!rawCust || rawCust.length < 2) continue;
 
                 let cleanCust = rawCust.replace(/\b(pt|cv|tbk|ud|inc|corp|ltd)\b\.?/gi, '').trim().replace(/\s+/g, ' ');
-                const princ = (r[colPrinc] || "General").toString().toUpperCase().trim();
+                let princ = (r[colPrinc] || "General").toString().toUpperCase().trim();
+                
+                // Manual overrides for incorrect principles in source data
+                const principleOverrides = {
+                    "INDOLITE": "FEDEX"
+                };
+                for (const key in principleOverrides) {
+                    if (cleanCust.toUpperCase().includes(key)) {
+                        princ = principleOverrides[key];
+                    }
+                }
+                
                 const serv = (r[colServ] || "Unknown").toString().toUpperCase().trim();
 
                 yearBlocks.forEach(block => {
@@ -1733,6 +1821,15 @@
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
                     allData = JSON.parse(saved);
+                    
+                    // --- Auto-Fix Historical Data without re-uploading ---
+                    allData.forEach(row => {
+                        if(row.customer && row.customer.toUpperCase().includes("INDOLITE")) {
+                            row.principle = "FEDEX";
+                        }
+                    });
+                    // -----------------------------------------------------
+
                     enrichSalesData(allData);
                     initFilters();
                     dashboardContent.classList.remove('hidden');
