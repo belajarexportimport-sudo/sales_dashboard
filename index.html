@@ -233,6 +233,10 @@
                             class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]">
                             <option value="all">All Customers</option>
                         </select>
+                        <select id="filterSales"
+                            class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 bg-blue-50 border-blue-200">
+                            <option value="all">All Sales</option>
+                        </select>
                     </div>
 
                     <!-- SALES & FORECAST CONTROL -->
@@ -1712,14 +1716,15 @@
                 }
             }
 
-            // 4. Identify Customer & Principle Columns
-            let colCust = 4, colPrinc = 1, colServ = 2;
+            // 4. Identify Customer, Principle & Sales Columns
+            let colCust = 4, colPrinc = 1, colServ = 2, colSales = -1;
             const headerRow = rows[headerRowIdx] || [];
             headerRow.forEach((cell, idx) => {
                 const v = (cell || "").toString().toLowerCase().trim();
                 if (v.includes("customer") || v.includes("client") || v.includes("nama") || v.includes("perusahaan")) colCust = idx;
                 if (v.includes("principle") || v.includes("principal") || v.includes("shipper")) colPrinc = idx;
                 if (v.includes("service") || v.includes("type") || v.includes("moda")) colServ = idx;
+                if (v.includes("sales") || v.includes("am") || v.includes("account manager")) colSales = idx;
             });
 
             const cleanData = [];
@@ -1801,6 +1806,7 @@
                         customer: cleanCust.toUpperCase(),
                         principle: princ,
                         serviceType: serv,
+                        salesName: colSales !== -1 ? (r[colSales] || "House").toString().trim() : "House",
                         year: block.year,
                         monthlyData: monthlyData
                     });
@@ -1855,7 +1861,7 @@
 
         // Dom Refs
         const fileInput = document.getElementById('fileInput'), uploadArea = document.getElementById('uploadArea'), dashboardContent = document.getElementById('dashboardContent');
-        const filterYear = document.getElementById('filterYear'), filterMonth = document.getElementById('filterMonth'), filterPrinciple = document.getElementById('filterPrinciple'), filterCustomer = document.getElementById('filterCustomer');
+        const filterYear = document.getElementById('filterYear'), filterMonth = document.getElementById('filterMonth'), filterPrinciple = document.getElementById('filterPrinciple'), filterCustomer = document.getElementById('filterCustomer'), filterSales = document.getElementById('filterSales');
 
         // Handlers
         fileInput.addEventListener('change', (e) => { if (e.target.files.length) processFile(e.target.files[0]) });
@@ -1875,7 +1881,7 @@
             updateDashboard();
             if (content) content.style.opacity = '1';
         }, 150);
-        [filterYear, filterMonth, filterPrinciple, filterCustomer].forEach(el => el.addEventListener('change', debouncedUpdate));
+        [filterYear, filterMonth, filterPrinciple, filterCustomer, filterSales].forEach(el => el.addEventListener('change', debouncedUpdate));
 
         async function processFile(file) {
             try {
@@ -1911,6 +1917,7 @@
                 const key = genKey(r);
                 if (map.has(key)) {
                     const oldRow = map.get(key);
+                    if (r.salesName) oldRow.salesName = r.salesName;
                     r.monthlyData.forEach(mIn => {
                         const mOldIdx = oldRow.monthlyData.findIndex(m => m.month === mIn.month);
                         // If month exists, OVERWRITE if incoming is non-zero
@@ -1961,6 +1968,8 @@
             setHtml('filterPrinciple', [...new Set(allData.map(d => d.principle))].sort());
             // Customers
             setHtml('filterCustomer', [...new Set(allData.map(d => d.customer))].sort());
+            // Sales Names
+            setHtml('filterSales', [...new Set(allData.map(d => d.salesName || "House"))].sort());
             // Service Types (NEW)
             setHtml('filterServiceType', [...new Set(allData.map(d => d.serviceType))].filter(s => s && s !== 'UNKNOWN').sort());
 
@@ -2038,7 +2047,7 @@
                 });
             }
 
-            const y = filterYear.value, m = filterMonth.value, p = filterPrinciple.value, c = filterCustomer.value;
+            const y = filterYear.value, m = filterMonth.value, p = filterPrinciple.value, c = filterCustomer.value, sales = filterSales.value;
             const l = document.getElementById('filterLane') ? document.getElementById('filterLane').value : 'all';
             const cmd = document.getElementById('filterCommodity') ? document.getElementById('filterCommodity').value : 'all';
             const s = document.getElementById('filterServiceType') ? document.getElementById('filterServiceType').value : 'all'; // NEW
@@ -2061,6 +2070,7 @@
                 if (p !== 'all' && row.principle != p) return null;
                 if (c !== 'all' && row.customer != c) return null;
                 if (s !== 'all' && row.serviceType != s) return null;
+                if (sales !== 'all' && row.salesName != sales) return null;
 
                 // Clone row to avoid mutating original
                 const newRow = { ...row, monthlyData: [] };
@@ -2095,15 +2105,15 @@
             // filters (y, m, p, c) are already applied in filteredData or handled by the function.
             // But getTraderStats re-filters by p/c. Double filtering is fine.
             // Pass ALL DATA to stats to ensure history is available
-            const stats = getTraderStats(activeData, y, m, p, c);
+            const stats = getTraderStats(activeData, y, m, p, c, sales);
             updateTraderKPIs(stats, y, m);
-            renderCustomerHealthChart(activeData, y, p, c);
-            renderPerformanceTable(filteredData, y, p, c);
-            renderMonthlyAnalysis(filteredData, y, m, p, c);
+            renderCustomerHealthChart(activeData, y, p, c, sales);
+            renderPerformanceTable(filteredData, y, p, c, sales);
+            renderMonthlyAnalysis(filteredData, y, m, p, c, sales);
         }
 
         // --- ANALYSIS LOGIC ---
-        function renderMonthlyAnalysis(allData, year, month, principleFilter, customerFilter) {
+        function renderMonthlyAnalysis(allData, year, month, principleFilter, customerFilter, salesFilter) {
             const container = document.getElementById('monthlyAnalysis');
             if (month === 'all') {
                 container.classList.add('hidden'); return;
@@ -2125,6 +2135,7 @@
             allData.forEach(row => {
                 if (principleFilter !== 'all' && row.principle !== principleFilter) return;
                 if (customerFilter !== 'all' && row.customer !== customerFilter) return;
+                if (salesFilter && salesFilter !== 'all' && row.salesName !== salesFilter) return;
 
                 const k = row.customer;
                 if (!custMap[k]) custMap[k] = { curr: 0, prev: 0 };
@@ -2279,7 +2290,7 @@
         }
 
         // Stats Logic (Fix: Aggregate first to handle multiple rows per customer)
-        function getTraderStats(allData, year, month, principleFilter, customerFilter) {
+        function getTraderStats(allData, year, month, principleFilter, customerFilter, salesFilter) {
             const aggGlobal = {}; // For status determination (across all principles)
             const selectedPrinciples = {}; // Principle mapping for display
 
@@ -2304,6 +2315,14 @@
             Object.keys(aggGlobal).forEach(cust => {
                 if (customerFilter !== 'all' && cust !== customerFilter) return;
                 if (principleFilter !== 'all' && !selectedPrinciples[cust].has(principleFilter)) return;
+                
+                // New: Sales Filter Check
+                if (salesFilter && salesFilter !== "all") {
+                    // Check if any row for this customer matches the sales name
+                    const customerRows = allData.filter(d => d.customer === cust);
+                    const hasSales = customerRows.some(d => d.salesName === salesFilter);
+                    if (!hasSales) return;
+                }
 
                 const timeline = Object.values(aggGlobal[cust]).sort((a, b) => a.gIdx - b.gIdx);
 
@@ -2384,7 +2403,7 @@
             localStorage.setItem('sales_person_global', val);
         }
 
-        function renderPerformanceTable(allData, year, principleFilter, customerFilter) {
+        function renderPerformanceTable(allData, year, principleFilter, customerFilter, salesFilter) {
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const allAgg = {};
 
@@ -2392,6 +2411,7 @@
             allData.forEach(row => {
                 if (principleFilter !== 'all' && row.principle !== principleFilter) return;
                 if (customerFilter !== 'all' && row.customer !== customerFilter) return;
+                if (salesFilter && salesFilter !== 'all' && row.salesName !== salesFilter) return;
 
                 row.monthlyData.forEach(m => {
                     const k = `${row.year}-${m.month}`;
@@ -2507,10 +2527,10 @@
             document.getElementById('topCustomerTable').innerHTML = s.map(c => `<tr><td class="px-6 py-3 font-medium">${c.n}</td><td class="px-6 py-3 text-xs text-slate-500">${getPrincipleLogo(c.p)}</td><td class="px-6 py-3 text-right font-bold">${new Intl.NumberFormat('id-ID').format(c.r)}</td><td class="px-6 py-3 text-right text-green-600">${new Intl.NumberFormat('id-ID').format(c.g)}</td></tr>`).join('');
             document.getElementById('topCustSubtitle').innerText = `${filterYear.value} - ${mf}`;
         }
-        function renderCustomerHealthChart(data, y, p, c) {
+        function renderCustomerHealthChart(data, y, p, c, sales) {
             const ms = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const ds = { n: [], l: [], r: [] };
-            ms.forEach(m => { const s = getTraderStats(data, y, m, p, c); ds.n.push(s.newTraders.length); ds.l.push(s.lostCustomers.length); ds.r.push(s.regularCustomers.length); });
+            ms.forEach(m => { const s = getTraderStats(data, y, m, p, c, sales); ds.n.push(s.newTraders.length); ds.l.push(s.lostCustomers.length); ds.r.push(s.regularCustomers.length); });
             if (charts['hc']) charts['hc'].destroy();
             charts['hc'] = new Chart(document.getElementById('chartCustomerHealth').getContext('2d'), {
                 type: 'line', data: { labels: ms, datasets: [{ label: 'New', data: ds.n, borderColor: '#2563eb', tension: 0.3 }, { label: 'Regular', data: ds.r, borderColor: '#16a34a', tension: 0.3 }, { label: 'Lost', data: ds.l, borderColor: '#dc2626', tension: 0.3 }] },
